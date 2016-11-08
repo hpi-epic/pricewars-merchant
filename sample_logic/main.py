@@ -21,6 +21,20 @@ class MerchantLogic(object):
             newOffer['id'] = self.addOfferToMarketplace(newOffer)
             self.offers.append(newOffer)
 
+        # Thread handling
+        self.interval = 3
+        thread = threading.Thread(target=self.run, args=())
+        thread.daemon = True                            # Daemonize thread
+        thread.start()                                  # Start the execution
+
+    def run(self):
+        """ Method that runs forever """
+        while True:
+            print('Loop tick')
+            self.interval = random.randint(2, 10)
+            self.executeLogic()
+            time.sleep(self.interval)
+
     def getProducts(self):
         # TODO: add producer API call
         return [
@@ -67,34 +81,9 @@ class MerchantLogic(object):
         r = requests.get(marketplaceEndpoint + '/offers')
         print(r.json())
 
-    def execute(self, setInterval=None):
+    def executeLogic(self):
         self.getOffers()
         self.adjustPrices()
-
-        # prepare next cycle
-        nextExecutionIn = random.randint(2, 10)
-        return nextExecutionIn
-
-
-
-class MerchantLoop(object):
-    # execFunc returns next wait interval
-    def __init__(self, startInterval=1, execFunc=None):
-        self.interval = startInterval
-        self.execFunc = execFunc
-
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True                            # Daemonize thread
-        thread.start()                                  # Start the execution
-
-    def run(self):
-        """ Method that runs forever """
-        while True:
-            # Do something
-            print('Loop tick')
-            self.interval = self.execFunc()
-            time.sleep(self.interval)
-
 
 
 app = Flask(__name__)
@@ -107,5 +96,4 @@ def item_sold():
 
 if __name__ == "__main__":
     merchantLogic = MerchantLogic()
-    example = MerchantLoop(startInterval=3, execFunc=merchantLogic.execute)
     app.run()

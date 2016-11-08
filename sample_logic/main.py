@@ -6,25 +6,28 @@ import requests
 
 from flask import Flask, request
 
-ownEndpoint = 'http://172.16.58.36:3000'
+ownEndpoint = 'http://192.168.2.6:5000'
 
-marketplaceEndpoint = 'http://172.16.56.197:8080'
-producerEndpoint = 'http://172.16.59.226:3000'
+marketplaceEndpoint = 'http://192.168.2.1:8080'
+producerEndpoint = 'http://192.168.2.7:3000'
 
 def getFromListByKey(dictList, key, value):
-    return [elem for elem in dictList if product[k] == value][0]
+    return [elem for elem in dictList if elem[key] == value][0]
 
 class MerchantLogic(object):
     def __init__(self):
         self.merchantID = self.registerToMarketplace()
         self.registerToProducer()
         self.products = self.getProducts()
+        print('products', self.products)
         self.offers = []
         
         for product in self.products:
             newOffer = self.createOffer(product)
             newOffer['id'] = self.addOfferToMarketplace(newOffer)
             self.offers.append(newOffer)
+
+        print('offers', self.offers)
 
         # Thread handling
         self.interval = 3
@@ -35,14 +38,13 @@ class MerchantLogic(object):
     def run(self):
         """ Method that runs forever """
         while True:
-            print('Loop tick')
             self.interval = random.randint(2, 10)
             self.executeLogic()
             time.sleep(self.interval)
 
     def getProducts(self):
         r = requests.get(producerEndpoint + '/buyers')
-        products = [merchant['products'] for merchant in r.json() if merchant['merchant_id'] == self.merchantID][0]
+        products = [merchant['products'] for merchant in r.json() if merchant['merchantID'] == self.merchantID][0]
         for product in products:
             product['amount'] = 1
         return products
@@ -62,6 +64,7 @@ class MerchantLogic(object):
 
     def addOfferToMarketplace(self, offer):
         r = requests.post(marketplaceEndpoint + '/offers', json=offer)
+        print('addOfferToMarketplace', r.text)
         return r.json()['offer_id']
 
     def registerToMarketplace(self):
@@ -71,36 +74,37 @@ class MerchantLogic(object):
             "algorithm_name": "IncreasePrice"
         }
         r = requests.post(marketplaceEndpoint + '/merchants', json=requestObject)
-        return r.json()[merchant_id]
+        print('registerToMarketplace', r.json())
+        return r.json()['merchant_id']
 
     def registerToProducer(self):
         requestObject = {
-            "merchant_id": self.merchantID
+            "merchantID": self.merchantID
         }
-        r = requests.post(producerEndpoint + '/buyers')
+        r = requests.post(producerEndpoint + '/buyers', json=requestObject)
+        print('registerToProducer')
 
     def adjustPrices(self):
         offer = random.choice(self.offers)
-        offer['price'] = max(offer['price'] - 1, 5)
+        offer['price'] = max(offer['price'] - 1, 17)
         self.updateOffer(offer)
 
     def updateOffer(self, newOffer):
         print('update offer:', newOffer)
         try:
-            r = requests.put(marketplaceEndpoint + '/offers/{:s}'.format(newOffer['id']), json=newOffer)
-        except:
-            print('failed to update offer')
+            r = requests.put(marketplaceEndpoint + '/offers/{:d}'.format(newOffer['id']), json=newOffer)
+        except Exception as e:
+            print('failed to update offer', e)
 
     def getOffers(self):
         r = requests.get(marketplaceEndpoint + '/offers')
-        print(r.json())
 
     def executeLogic(self):
         self.getOffers()
         self.adjustPrices()
+        self.buyProductAndUpdateOffer()
 
     def soldProduct(self, offer_id, amount):
-        print('sold {:d} items of the offer {:d}'.format(amount, int(offer_id)))
         offer = [offer for offer in self.offers if offer['id'] == offer_id][0]
         offer['amount'] -= 1
         product = [product for product in self.products if product['product_id'] == offer['product_id']][0]
@@ -109,6 +113,9 @@ class MerchantLogic(object):
             print('product {:d} is out of stock!'.format(int(product['product_id'])))
 
         # sample logic: TODO: improve
+        self.buyProductAndUpdateOffer()
+
+    def buyProductAndUpdateOffer(self):
         newProduct = self.buyRandomProduct()
         offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
         offer['amount'] = newProduct['amount']
@@ -132,9 +139,16 @@ merchantLogic = None
 @app.route('/sold', methods=['POST'])
 def item_sold():
     global merchantLogic
-    offer_id = request.json['offer_id']
-    amount = request.json['amount']
-    merchantLogic.soldProduct(offer_id, amount)
+    
+    if merchantLogic:
+        offer_id = request.json['offer_id']
+        amount = request.json['amount']
+        consumer_id = request.json['consumer_id']
+        print('sold {:d} items of the offer {:d} to {:s}'.format(amount, offer_id, consumer_id))
+        merchantLogic.soldProduct(offer_id, amount)
+    else:
+        print('merchantlogic not started')
+
     return "ok"
 
 if __name__ == "__main__":

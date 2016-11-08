@@ -7,11 +7,14 @@ import requests
 from flask import Flask, request, Response
 
 ownHost = "127.0.0.1"
-ownHost = 'merchant'
+# ownHost = 'merchant'
 ownEndpoint = 'http://{:s}:5000'.format(ownHost)
 
 marketplaceEndpoint = 'http://marketplace:8080'
+marketplaceEndpoint = 'http://127.0.0.1:8080'
+
 producerEndpoint = 'http://producer:3000'
+producerEndpoint = 'http://127.0.0.1:3000'
 
 def getFromListByKey(dictList, key, value):
     return [elem for elem in dictList if elem[key] == value][0]
@@ -46,7 +49,7 @@ class MerchantLogic(object):
 
     def getProducts(self):
         r = requests.get(producerEndpoint + '/buyers')
-        products = [merchant['products'] for merchant in r.json() if merchant['merchantID'] == self.merchantID][0]
+        products = [merchant['products'] for merchant in r.json() if merchant['merchant_id'] == self.merchantID][0]
         for product in products:
             product['amount'] = 1
         return products

@@ -7,10 +7,11 @@ import requests
 from flask import Flask, request, Response
 
 ownHost = "127.0.0.1"
+ownHost = 'merchant'
 ownEndpoint = 'http://{:s}:5000'.format(ownHost)
 
-marketplaceEndpoint = 'http://192.168.2.1:8080'
-producerEndpoint = 'http://192.168.2.7:3000'
+marketplaceEndpoint = 'http://marketplace:8080'
+producerEndpoint = 'http://producer:3000'
 
 def getFromListByKey(dictList, key, value):
     return [elem for elem in dictList if elem[key] == value][0]

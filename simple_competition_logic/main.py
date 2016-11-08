@@ -4,12 +4,19 @@ import random
 import json
 import requests
 
-from flask import Flask, request
+from flask import Flask, request, Response
 
-ownEndpoint = 'http://192.168.2.6:5000'
 
-marketplaceEndpoint = 'http://192.168.2.1:8080'
-producerEndpoint = 'http://192.168.2.7:3000'
+port = 5000
+ownHost = "127.0.0.1"
+# ownHost = 'merchant'
+ownEndpoint = 'http://{:s}:{:d}'.format(ownHost, port)
+
+marketplaceEndpoint = 'http://marketplace:8080'
+marketplaceEndpoint = 'http://127.0.0.1:8080'
+
+producerEndpoint = 'http://producer:3000'
+producerEndpoint = 'http://127.0.0.1:3000'
 
 def getFromListByKey(dictList, key, value):
     return [elem for elem in dictList if elem[key] == value][0]
@@ -44,7 +51,7 @@ class MerchantLogic(object):
 
     def getProducts(self):
         r = requests.get(producerEndpoint + '/buyers')
-        products = [merchant['products'] for merchant in r.json() if merchant['merchantID'] == self.merchantID][0]
+        products = [merchant['products'] for merchant in r.json() if merchant['merchant_id'] == self.merchantID][0]
         for product in products:
             product['amount'] = 1
         return products
@@ -85,11 +92,13 @@ class MerchantLogic(object):
         print('registerToProducer')
 
     def adjustPrices(self, offer, minPrice): 
-		if minPrice < 16: 
-			offer['price'] = 32
-		else:
-			offer['price'] = min(max(minPrice-1, 16),32)
-        self.updateOffer(offer)
+        newPrice = 32
+        if minPrice > 16:
+            newPrice = min(max(minPrice-1, 16),32)
+
+        if newPrice != offer['price']:
+            offer['price'] = newPrice
+            self.updateOffer(offer)
 
     def updateOffer(self, newOffer):
         print('update offer:', newOffer)
@@ -100,15 +109,17 @@ class MerchantLogic(object):
 
     def getOffers(self):
         r = requests.get(marketplaceEndpoint + '/offers')
-		offers = r.json()
-		return offers
+        offers = r.json()
+        return offers
 
     def executeLogic(self):
-		offers = self.getOffers()
-		for product in self.products:
-			competitorOffers = [offer['price'] for offer in offers if offer['merchant_id'] != self.merchantID && offer['product_id'] == product['product_id']]
-			self.adjustPrices(getFromListByKey(self.offers,'product_id',product['product_id']),min(competitorOffers))
-				
+        offers = self.getOffers()
+        for product in self.products:
+            competitorOffers = [offer['price'] for offer in offers if offer['merchant_id'] != self.merchantID and offer['product_id'] == product['product_id']]
+            if len(competitorOffers) == 0:
+                continue
+            self.adjustPrices(getFromListByKey(self.offers,'product_id',product['product_id']),min(competitorOffers))
+
     def soldProduct(self, offer_id, amount):
         offer = [offer for offer in self.offers if offer['id'] == offer_id][0]
         offer['amount'] -= 1
@@ -153,8 +164,10 @@ def item_sold():
     else:
         print('merchantlogic not started')
 
-    return "ok"
+    js = json.dumps({})
+    resp = Response(js, status=200, mimetype='application/json')
+    return resp
 
 if __name__ == "__main__":
     merchantLogic = MerchantLogic()
-    app.run()
+    app.run(host=ownHost, port=port)

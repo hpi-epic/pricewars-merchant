@@ -84,9 +84,11 @@ class MerchantLogic(object):
         r = requests.post(producerEndpoint + '/buyers', json=requestObject)
         print('registerToProducer')
 
-    def adjustPrices(self):
-        offer = random.choice(self.offers)
-        offer['price'] = max(offer['price'] - 1, 17)
+    def adjustPrices(self, offer, minPrice): 
+		if minPrice < 16: 
+			offer['price'] = 32
+		else:
+			offer['price'] = min(max(minPrice-1, 16),32)
         self.updateOffer(offer)
 
     def updateOffer(self, newOffer):
@@ -98,12 +100,15 @@ class MerchantLogic(object):
 
     def getOffers(self):
         r = requests.get(marketplaceEndpoint + '/offers')
+		offers = r.json()
+		return offers
 
     def executeLogic(self):
-        self.getOffers()
-        self.adjustPrices()
-        self.buyProductAndUpdateOffer()
-
+		offers = self.getOffers()
+		for product in self.products:
+			competitorOffers = [offer['price'] for offer in offers if offer['merchant_id'] != self.merchantID && offer['product_id'] == product['product_id']]
+			self.adjustPrices(getFromListByKey(self.offers,'product_id',product['product_id']),min(competitorOffers))
+				
     def soldProduct(self, offer_id, amount):
         offer = [offer for offer in self.offers if offer['id'] == offer_id][0]
         offer['amount'] -= 1
@@ -119,7 +124,6 @@ class MerchantLogic(object):
         newProduct = self.buyRandomProduct()
         offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
         offer['amount'] = newProduct['amount']
-        offer['price'] += 5
         self.updateOffer(offer)
 
     # returns product

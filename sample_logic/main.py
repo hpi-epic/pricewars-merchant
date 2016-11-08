@@ -4,9 +4,10 @@ import random
 import json
 import requests
 
-from flask import Flask, request
+from flask import Flask, request, Response
 
-ownEndpoint = 'http://192.168.2.6:5000'
+ownHost = "127.0.0.1"
+ownEndpoint = 'http://{:s}:5000'.format(ownHost)
 
 marketplaceEndpoint = 'http://192.168.2.1:8080'
 producerEndpoint = 'http://192.168.2.7:3000'
@@ -102,12 +103,15 @@ class MerchantLogic(object):
     def executeLogic(self):
         self.getOffers()
         self.adjustPrices()
-        self.buyProductAndUpdateOffer()
+        #self.buyProductAndUpdateOffer()
 
-    def soldProduct(self, offer_id, amount):
+    def soldProduct(self, offer_id, amount, price):
+        print('soldProduct')
         offer = [offer for offer in self.offers if offer['id'] == offer_id][0]
+        print('found offer:', offer)
         offer['amount'] -= 1
         product = [product for product in self.products if product['product_id'] == offer['product_id']][0]
+        print('found product:', product)
         product['amount'] -= 1
         if (product['amount'] <= 0):
             print('product {:d} is out of stock!'.format(int(product['product_id'])))
@@ -116,10 +120,14 @@ class MerchantLogic(object):
         self.buyProductAndUpdateOffer()
 
     def buyProductAndUpdateOffer(self):
+        print('buy Product and update')
         newProduct = self.buyRandomProduct()
+        print('bought:', newProduct)
         offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
+        print('in this offer:', offer)
         offer['amount'] = newProduct['amount']
         offer['price'] += 5
+        print('new offer:', offer)
         self.updateOffer(offer)
 
     # returns product
@@ -141,16 +149,22 @@ def item_sold():
     global merchantLogic
     
     if merchantLogic:
+        print(request.json)
         offer_id = request.json['offer_id']
         amount = request.json['amount']
-        consumer_id = request.json['consumer_id']
-        print('sold {:d} items of the offer {:d} to {:s}'.format(amount, offer_id, consumer_id))
-        merchantLogic.soldProduct(offer_id, amount)
+        price = request.json['price']
+        consumer_id = ''
+        if 'consumer_id' in request.json:
+            consumer_id = request.json['consumer_id']
+        print('sold {:d} items of the offer {:d} to {:s} for {:d}'.format(amount, offer_id, consumer_id, price))
+        merchantLogic.soldProduct(offer_id, amount, price)
     else:
         print('merchantlogic not started')
 
-    return "ok"
+    js = json.dumps({})
+    resp = Response(js, status=200, mimetype='application/json')
+    return resp
 
 if __name__ == "__main__":
     merchantLogic = MerchantLogic()
-    app.run()
+    app.run(host=ownHost)

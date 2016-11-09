@@ -10,11 +10,13 @@ ownHost = "127.0.0.1"
 # ownHost = 'merchant'
 ownEndpoint = 'http://{:s}:5000'.format(ownHost)
 
-marketplaceEndpoint = 'http://marketplace:8080'
-marketplaceEndpoint = 'http://127.0.0.1:8080'
-
-producerEndpoint = 'http://producer:3000'
-producerEndpoint = 'http://127.0.0.1:3000'
+settings = {
+    'marketplaceEndpoint': 'http://127.0.0.1:8080',
+    'producerEndpoint': 'http://127.0.0.1:3000',
+    'minProfit': 1,
+    'priceIncrease': 5,
+    'priceDecrease': 1
+}
 
 def getFromListByKey(dictList, key, value):
     return [elem for elem in dictList if elem[key] == value][0]
@@ -35,20 +37,38 @@ class MerchantLogic(object):
         print('offers', self.offers)
 
         # Thread handling
+        self.state = 'running'
         self.interval = 3
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True                            # Daemonize thread
-        thread.start()                                  # Start the execution
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.daemon = True                            # Daemonize thread
+        self.thread.start()                                  # Start the execution
+
+    def start(self):
+        self.state = 'running'
+
+    def stop(self):
+        self.state = 'stopping'
+
+    def terminate(self):
+        self.state = 'exiting'
 
     def run(self):
         """ Method that runs forever """
         while True:
-            self.interval = random.randint(2, 10)
-            self.executeLogic()
+            # default interval to avoid busy waiting, but merchant logic should still
+            # be in charge of setting the interval (that is random, currently, but could change)
+            self.interval = 5
+
+            if self.state == 'running':
+                self.interval = random.randint(2, 10)
+                self.executeLogic()
+            elif self.state == 'exiting': 
+                break
+
             time.sleep(self.interval)
 
     def getProducts(self):
-        r = requests.get(producerEndpoint + '/buyers')
+        r = requests.get(settings['producerEndpoint'] + '/buyers')
         products = [merchant['products'] for merchant in r.json() if merchant['merchant_id'] == self.merchantID][0]
         for product in products:
             product['amount'] = 1
@@ -68,7 +88,7 @@ class MerchantLogic(object):
         }
 
     def addOfferToMarketplace(self, offer):
-        r = requests.post(marketplaceEndpoint + '/offers', json=offer)
+        r = requests.post(settings['marketplaceEndpoint'] + '/offers', json=offer)
         print('addOfferToMarketplace', r.text)
         return r.json()['offer_id']
 
@@ -78,7 +98,7 @@ class MerchantLogic(object):
             "merchant_name": "Sample Merchant",
             "algorithm_name": "IncreasePrice"
         }
-        r = requests.post(marketplaceEndpoint + '/merchants', json=requestObject)
+        r = requests.post(settings['marketplaceEndpoint'] + '/merchants', json=requestObject)
         print('registerToMarketplace', r.json())
         return r.json()['merchant_id']
 
@@ -86,7 +106,7 @@ class MerchantLogic(object):
         requestObject = {
             "merchantID": self.merchantID
         }
-        r = requests.post(producerEndpoint + '/buyers', json=requestObject)
+        r = requests.post(settings['producerEndpoint'] + '/buyers', json=requestObject)
         print('registerToProducer')
 
     def adjustPrices(self):
@@ -97,12 +117,12 @@ class MerchantLogic(object):
     def updateOffer(self, newOffer):
         print('update offer:', newOffer)
         try:
-            r = requests.put(marketplaceEndpoint + '/offers/{:d}'.format(newOffer['id']), json=newOffer)
+            r = requests.put(settings['marketplaceEndpoint'] + '/offers/{:d}'.format(newOffer['id']), json=newOffer)
         except Exception as e:
             print('failed to update offer', e)
 
     def getOffers(self):
-        r = requests.get(marketplaceEndpoint + '/offers')
+        r = requests.get(settings['marketplaceEndpoint'] + '/offers')
 
     def executeLogic(self):
         self.getOffers()
@@ -136,7 +156,7 @@ class MerchantLogic(object):
 
     # returns product
     def buyRandomProduct(self):
-        r = requests.get(producerEndpoint + '/products/buy?merchantID={:s}'.format(self.merchantID))
+        r = requests.get(settings['producerEndpoint'] + '/products/buy?merchantID={:s}'.format(self.merchantID))
         productObject = r.json()
         print('bought new product', productObject)
         product = getFromListByKey(self.products, 'product_id', productObject['product_id'])
@@ -145,8 +165,45 @@ class MerchantLogic(object):
 
 
 app = Flask(__name__)
-
 merchantLogic = None
+
+def jsonResponse(obj):
+    js = json.dumps(obj)
+    resp = Response(js, status=200, mimetype='application/json')
+    return resp
+
+@app.route('/settings', methods=['GET'])
+def get_settings():
+    return jsonResponse(settings)
+
+@app.route('/settings', methods=['PUT'])
+def put_settings():
+    global settings
+    newSettings = request.json
+    settings.update(newSettings)
+    return jsonResponse(settings)
+
+@app.route('/settings/execution', methods=['POST'])
+def set_state():
+    global merchantLogic
+
+    nextState = request.json['nextState']
+    print(nextState)
+    if nextState == 'start':
+        if not merchantLogic:
+            print('new merchant')
+            merchantLogic = MerchantLogic()
+        print('merchant start')
+        merchantLogic.start()
+    elif nextState == 'stop':
+        print('merchant stop')
+        merchantLogic.stop()
+    elif nextState == 'kill':
+        print('merchant kill')
+        merchantLogic.terminate()
+        merchantLogic = None
+
+    return jsonResponse({})
 
 @app.route('/sold', methods=['POST'])
 def item_sold():
@@ -165,10 +222,7 @@ def item_sold():
     else:
         print('merchantlogic not started')
 
-    js = json.dumps({})
-    resp = Response(js, status=200, mimetype='application/json')
-    return resp
+    return jsonResponse({})
 
 if __name__ == "__main__":
-    merchantLogic = MerchantLogic()
     app.run(host=ownHost)

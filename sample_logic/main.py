@@ -1,3 +1,17 @@
+### Doc:
+#   run this file - it starts HTTP Server (Thread 1) 
+#   post {nextState: 'init'} to Server:
+#       - it starts Logic in state 'init' (Thread 2) which registers to Market
+#
+#   UI posts:
+#       - {nextState: 'start'} --> Logic registers to producer etc. adds offers, switches to 'running'
+#       - {nextState: 'stop'} --> Logic stops, switches to 'stopping'
+#       - {nextState: 'start'} --> Logic continues changing prices, getting products, switches to 'running'
+#       - {nextState: 'kill'} --> Logic unregisters to Market and termintes (exit Thread 2), switches to 'exiting'
+#
+#   To restart, use external Tool to post
+#       - {nextState: 'init'}
+
 import threading
 import time
 import random
@@ -5,14 +19,12 @@ import json
 import requests
 
 from flask import Flask, request, Response
-
-ownHost = "127.0.0.1"
-# ownHost = 'merchant'
-ownEndpoint = 'http://{:s}:5000'.format(ownHost)
+from flask_cors import CORS, cross_origin
 
 settings = {
-    'marketplaceEndpoint': 'http://127.0.0.1:8080',
-    'producerEndpoint': 'http://127.0.0.1:3000',
+    'ownEndpoint': 'http://127.0.0.1:5000',
+    'marketplaceEndpoint': 'http://192.168.2.1:8080',
+    'producerEndpoint': 'http://192.168.2.7:3000',
     'minProfit': 1,
     'priceIncrease': 5,
     'priceDecrease': 1
@@ -23,7 +35,34 @@ def getFromListByKey(dictList, key, value):
 
 class MerchantLogic(object):
     def __init__(self):
+        print('MerchantLogic created')
         self.merchantID = self.registerToMarketplace()
+        self.state = 'init'
+        self.runLogicLoop()
+
+    def runLogicLoop(self):
+        self.interval = 3
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.daemon = True                            # Daemonize thread
+        self.thread.start()                                  # Start the execution
+
+    def run(self):
+        """ Method that runs forever """
+        while not self.state == 'exiting':
+            print('loop running, merchant in state:', self.state)
+            # default interval to avoid busy waiting, but merchant logic should still
+            # be in charge of setting the interval (that is random, currently, but could change)
+            self.interval = 5
+
+            if self.state == 'running':
+                self.interval = random.randint(2, 10)
+                self.executeLogic()
+            
+            time.sleep(self.interval)
+
+        self.onExit()
+
+    def gameInit(self):
         self.registerToProducer()
         self.products = self.getProducts()
         print('products', self.products)
@@ -36,14 +75,9 @@ class MerchantLogic(object):
 
         print('offers', self.offers)
 
-        # Thread handling
-        self.state = 'running'
-        self.interval = 3
-        self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True                            # Daemonize thread
-        self.thread.start()                                  # Start the execution
-
     def start(self):
+        if self.state == 'init':
+            self.gameInit()
         self.state = 'running'
 
     def stop(self):
@@ -52,20 +86,8 @@ class MerchantLogic(object):
     def terminate(self):
         self.state = 'exiting'
 
-    def run(self):
-        """ Method that runs forever """
-        while True:
-            # default interval to avoid busy waiting, but merchant logic should still
-            # be in charge of setting the interval (that is random, currently, but could change)
-            self.interval = 5
-
-            if self.state == 'running':
-                self.interval = random.randint(2, 10)
-                self.executeLogic()
-            elif self.state == 'exiting': 
-                break
-
-            time.sleep(self.interval)
+    def onExit(self):
+        self.unRegisterToMarketplace()
 
     def getProducts(self):
         r = requests.get(settings['producerEndpoint'] + '/buyers')
@@ -94,7 +116,7 @@ class MerchantLogic(object):
 
     def registerToMarketplace(self):
         requestObject = {
-            "api_endpoint_url": ownEndpoint,
+            "api_endpoint_url": settings['ownEndpoint'],
             "merchant_name": "Sample Merchant",
             "algorithm_name": "IncreasePrice"
         }
@@ -102,12 +124,16 @@ class MerchantLogic(object):
         print('registerToMarketplace', r.json())
         return r.json()['merchant_id']
 
+    def unRegisterToMarketplace(self):
+        print('unRegisterToMarketplace')
+        r = requests.delete(settings['marketplaceEndpoint'] + '/merchants/{:d}'.format(self.merchantID))
+
     def registerToProducer(self):
+        print('registerToProducer')
         requestObject = {
             "merchantID": self.merchantID
         }
-        r = requests.post(settings['producerEndpoint'] + '/buyers', json=requestObject)
-        print('registerToProducer')
+        r = requests.post(settings['producerEndpoint'] + '/buyers/register', json=requestObject)
 
     def adjustPrices(self):
         offer = random.choice(self.offers)
@@ -165,6 +191,7 @@ class MerchantLogic(object):
 
 
 app = Flask(__name__)
+CORS(app)
 merchantLogic = None
 
 def jsonResponse(obj):
@@ -176,7 +203,7 @@ def jsonResponse(obj):
 def get_settings():
     return jsonResponse(settings)
 
-@app.route('/settings', methods=['PUT'])
+@app.route('/settings', methods=['PUT', 'POST'])
 def put_settings():
     global settings
     newSettings = request.json
@@ -185,14 +212,18 @@ def put_settings():
 
 @app.route('/settings/execution', methods=['POST'])
 def set_state():
+    global settings
     global merchantLogic
 
     nextState = request.json['nextState']
     print(nextState)
-    if nextState == 'start':
+    if nextState == 'init':
+        settings.update({ 'ownEndpoint': request.json['merchant_url'] }) if 'merchant_url' in request.json else None
+        print('updated settings', settings)
         if not merchantLogic:
             print('new merchant')
             merchantLogic = MerchantLogic()
+    elif nextState == 'start':
         print('merchant start')
         merchantLogic.start()
     elif nextState == 'stop':
@@ -227,4 +258,4 @@ def item_sold():
     return jsonResponse({})
 
 if __name__ == "__main__":
-    app.run(host=ownHost)
+    app.run(host='0.0.0.0')

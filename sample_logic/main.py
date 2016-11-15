@@ -22,6 +22,7 @@ from flask import Flask, request, Response
 from flask_cors import CORS, cross_origin
 
 settings = {
+    'merchant_id': 0,
     'ownEndpoint': 'http://127.0.0.1:5000',
     'marketplaceEndpoint': 'http://192.168.2.1:8080',
     'producerEndpoint': 'http://192.168.2.7:3000',
@@ -35,8 +36,10 @@ def getFromListByKey(dictList, key, value):
 
 class MerchantLogic(object):
     def __init__(self):
+        global settings
         print('MerchantLogic created')
         self.merchantID = self.registerToMarketplace()
+        settings.update({'merchant_id': self.merchantID})
         self.state = 'init'
         self.runLogicLoop()
 
@@ -63,8 +66,7 @@ class MerchantLogic(object):
         self.onExit()
 
     def gameInit(self):
-        self.registerToProducer()
-        self.products = self.getProducts()
+        self.products = self.registerToProducerAndGetProducts()
         print('products', self.products)
         self.offers = []
         
@@ -88,13 +90,6 @@ class MerchantLogic(object):
 
     def onExit(self):
         self.unRegisterToMarketplace()
-
-    def getProducts(self):
-        r = requests.get(settings['producerEndpoint'] + '/buyers')
-        products = [merchant['products'] for merchant in r.json() if merchant['merchant_id'] == self.merchantID][0]
-        for product in products:
-            product['amount'] = 1
-        return products
 
     def createOffer(self, product):
         return {
@@ -128,12 +123,16 @@ class MerchantLogic(object):
         print('unRegisterToMarketplace')
         r = requests.delete(settings['marketplaceEndpoint'] + '/merchants/{:d}'.format(self.merchantID))
 
-    def registerToProducer(self):
+    def registerToProducerAndGetProducts(self):
         print('registerToProducer')
         requestObject = {
-            "merchantID": self.merchantID
+            "merchant_id": self.merchantID
         }
         r = requests.post(settings['producerEndpoint'] + '/buyers/register', json=requestObject)
+        products = r.json()
+        for product in products:
+            product['amount'] = 1
+        return products
 
     def adjustPrices(self):
         offer = random.choice(self.offers)
@@ -182,7 +181,7 @@ class MerchantLogic(object):
 
     # returns product
     def buyRandomProduct(self):
-        r = requests.get(settings['producerEndpoint'] + '/products/buy?merchantID={:d}'.format(self.merchantID))
+        r = requests.get(settings['producerEndpoint'] + '/products/buy?merchant_id={:d}'.format(self.merchantID))
         productObject = r.json()
         print('bought new product', productObject)
         product = getFromListByKey(self.products, 'product_id', productObject['product_id'])

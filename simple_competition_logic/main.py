@@ -17,6 +17,7 @@ import time
 import random
 import json
 import requests
+import argparse
 
 from flask import Flask, request, Response
 from flask_cors import CORS, cross_origin
@@ -163,7 +164,8 @@ class MerchantLogic(object):
         offers = self.getOffers()
         for product in self.products:
             competitorOffers = [offer['price'] for offer in offers if offer['merchant_id'] != self.merchantID and offer['product_id'] == product['product_id']]
-            self.adjustPrices(getFromListByKey(self.offers,'product_id',product['product_id']),min(competitorOffers))
+            if len(competitorOffers) > 0:
+                self.adjustPrices(getFromListByKey(self.offers,'product_id',product['product_id']),min(competitorOffers))
 
     def soldProduct(self, offer_id, amount, price):
         print('soldProduct')
@@ -265,5 +267,11 @@ def item_sold():
 
     return jsonResponse({})
 
+
+parser = argparse.ArgumentParser(description='PriceWars Merchant')
+parser.add_argument('--port', type=int,
+                    help='port to bind flask App to')
+args = parser.parse_args()
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=args.port)

@@ -138,7 +138,7 @@ class MerchantLogic(object):
         print('found product:', product)
         product['amount'] -= 1
         if (product['amount'] <= 0):
-            print('product {:d} is out of stock!'.format(int(product['product_id'])))
+            print('product {:d} is out of stock!'.format(product['product_id']))
 
         # sample logic: TODO: improve
         self.buyProductAndUpdateOffer()
@@ -156,7 +156,7 @@ class MerchantLogic(object):
 
     # returns product
     def buyRandomProduct(self):
-        r = requests.get(settings['producerEndpoint'] + '/products/buy?merchantID={:s}'.format(self.merchantID))
+        r = requests.get(settings['producerEndpoint'] + '/products/buy?merchantID={:d}'.format(self.merchantID))
         productObject = r.json()
         print('bought new product', productObject)
         product = getFromListByKey(self.products, 'product_id', productObject['product_id'])
@@ -211,12 +211,14 @@ def item_sold():
     
     if merchantLogic:
         print(request.json)
+        # ignore 'consumer_id' and 'prime'
         offer_id = request.json['offer_id']
         amount = request.json['amount']
         price = request.json['price']
-        consumer_id = ''
-        if 'consumer_id' in request.json:
-            consumer_id = request.json['consumer_id']
+
+        consumer_id = request.json['consumer_id'] if 'consumer_id' in request.json else ''
+        prime = request.json['prime'] if 'prime' in request.json else ''
+        
         print('sold {:d} items of the offer {:d} to {:s} for {:d}'.format(amount, offer_id, consumer_id, price))
         merchantLogic.soldProduct(offer_id, amount, price)
     else:

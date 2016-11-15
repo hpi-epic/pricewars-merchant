@@ -135,7 +135,9 @@ class MerchantLogic(object):
         newProduct = self.buyRandomProduct()
         offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
         offer['amount'] = newProduct['amount']
-        self.updateOffer(offer)
+        self.updateOffer(offer)		
+		r = requests.patch(marketplaceEndpoint + '/offers/'+offer['id']+'/restock', json={'amount': 1})
+        print('updatedAmount', r.text)
 
     # returns product
     def buyRandomProduct(self):

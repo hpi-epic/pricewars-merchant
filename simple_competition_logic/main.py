@@ -162,7 +162,7 @@ class MerchantLogic(object):
 
         offers = self.getOffers()
         for product in self.products:
-            competitorOffers = [offer['price'] for offer in offers if offer['merchant_id'] != self.merchantID && offer['product_id'] == product['product_id']]
+            competitorOffers = [offer['price'] for offer in offers if offer['merchant_id'] != self.merchantID and offer['product_id'] == product['product_id']]
             self.adjustPrices(getFromListByKey(self.offers,'product_id',product['product_id']),min(competitorOffers))
 
     def soldProduct(self, offer_id, amount, price):

@@ -43,6 +43,7 @@ class MerchantLogic(object):
         settings.update({'merchant_id': self.merchantID})
         self.state = 'init'
         self.execQueue = []
+		self.initialProducts = 5
 
         self.runLogicLoop()
 
@@ -69,7 +70,7 @@ class MerchantLogic(object):
         self.onExit()
 
     def gameInit(self):
-        self.products = self.registerToProducerAndGetProducts()
+        self.products = self.getInitialProducts()
         print('products', self.products)
         self.offers = []
         
@@ -93,12 +94,13 @@ class MerchantLogic(object):
 
     def onExit(self):
         self.unRegisterToMarketplace()
-        self.unRegisterToProducer()
 
     def createOffer(self, product):
         return {
             "product_id": product['product_id'],
             "merchant_id": self.merchantID,
+			"uid": product['uid'],
+			"quality": product['quality'],
             "amount": product['amount'],
             "price": product['price'] + 42,
             "shipping_time": {
@@ -127,20 +129,16 @@ class MerchantLogic(object):
         print('unRegisterToMarketplace')
         r = requests.delete(settings['marketplaceEndpoint'] + '/merchants/{:d}'.format(self.merchantID))
 
-    def registerToProducerAndGetProducts(self):
-        print('registerToProducer')
-        requestObject = {
-            "merchant_id": self.merchantID
-        }
-        r = requests.post(settings['producerEndpoint'] + '/buyers/register', json=requestObject)
-        products = r.json()
-        for product in products:
-            product['amount'] = 1
-        return products
-
-    def unRegisterToProducer(self):
-        print('unRegisterToProducer')
-        r = requests.delete(settings['producerEndpoint'] + '/buyers/{:d}'.format(self.merchantID))
+    def getInitialProducts(self):
+		products =  {}
+		for i in range(self.initialProducts):
+			r = requests.post(settings['producerEndpoint'] + '/buy')
+			product = r.json()
+			if product['product_id'] in products:
+				products[product['product_id']]['amount'] += 1
+			else:
+				products[product['product_id']] = product
+        return list(products.values())
 
     def updateOffer(self, newOffer):
         print('update offer:', newOffer)
@@ -191,19 +189,24 @@ class MerchantLogic(object):
     def buyProductAndUpdateOffer(self):
         print('buy Product and update')
         newProduct = self.buyRandomProduct()
-        print('bought:', newProduct)
-        offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
-        print('in this offer:', offer)
-        offer['amount'] = newProduct['amount']
-        r = requests.patch(settings['marketplaceEndpoint'] + '/offers/{:d}/restock'.format(offer['id']), json={'amount': 1})
-
+		if 	newProduct['product_id'] in self.products:
+			product = getFromListByKey(self.products, 'product_id', newProduct['product_id'])
+			product['amount'] += 1
+			offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
+			print('in this offer:', offer)
+			offer['amount'] = product['amount']
+			r = requests.patch(settings['marketplaceEndpoint'] + '/offers/{:d}/restock'.format(offer['id']), json={'amount': 1})
+		else:
+			self.products.append(newProduct)
+			newOffer = self.createOffer(newProduct)
+            newOffer['id'] = self.addOfferToMarketplace(newOffer)
+            self.offers.append(newOffer)
+       
     # returns product
     def buyRandomProduct(self):
-        r = requests.get(settings['producerEndpoint'] + '/products/buy?merchant_id={:d}'.format(self.merchantID))
-        productObject = r.json()
-        print('bought new product', productObject)
-        product = getFromListByKey(self.products, 'product_id', productObject['product_id'])
-        product['amount'] += 1
+        r = requests.post(settings['producerEndpoint'] + '/buy')
+        product = r.json()
+        print('bought new product', product)
         return product
 
 

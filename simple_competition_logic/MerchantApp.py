@@ -230,7 +230,7 @@ class MerchantLogic(object):
 
     # returns product
     def buy_random_product(self):
-        url = urljoin(settings['producerEndpoint'] + 'buy?merchant_id={:d}'.format(self.merchantID))
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
         r = requests.get(url)
         product = r.json()
         print('bought new product', product)

@@ -250,7 +250,7 @@ def item_sold():
         prime = request.json['prime'] if 'prime' in request.json else ''
         
         print('sold {:d} items of the offer {:d} to {:s} for {:d}'.format(amount, offer_id, consumer_id, price))
-        merchantLogic.soldProduct(offer_id, amount, price)
+        merchantLogic.sold_product(offer_id, amount, price)
     else:
         print('merchantlogic not started')
 

@@ -134,7 +134,7 @@ class MerchantLogic(object):
     def getInitialProducts(self):
         products = {}
         for i in range(self.initialProducts):
-            r = requests.post(settings['producerEndpoint'] + '/buy')
+            r = requests.get(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
             product = r.json()
             if product['product_id'] in products:
                 products[product['product_id']]['amount'] += 1
@@ -210,7 +210,7 @@ class MerchantLogic(object):
 
     # returns product
     def buyRandomProduct(self):
-        r = requests.post(settings['producerEndpoint'] + '/buy')
+        r = requests.get(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
         product = r.json()
         print('bought new product', product)
         return product

@@ -28,8 +28,12 @@ settings = {
     'marketplaceEndpoint': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'minProfit': 1,
-    'priceIncrease': 5,
-    'priceDecrease': 1
+    'priceDecrease': 1,
+	'initialProducts': 5,
+	'minPriceMargin': 16,
+	'maxPriceMargin': 32,
+	'shipping': 5,
+	'primeShipping': 1
 }
 
 
@@ -45,7 +49,6 @@ class MerchantLogic(object):
         settings.update({'merchant_id': self.merchantID})
         self.state = 'init'
         self.execQueue = []
-        self.initialProducts = 5
 
         self.runLogicLoop()
 
@@ -104,10 +107,10 @@ class MerchantLogic(object):
             "uid": product['uid'],
             "quality": product['quality'],
             "amount": product['amount'],
-            "price": product['price'] + 42,
+            "price": product['price'] + settings['minProfit'] + settings['maxPriceMargin'],
             "shipping_time": {
-                "standard": 5,
-                "prime": 1
+                "standard": settings['shipping'],
+                "prime": settings['primeShipping']
             },
             "prime": True
         }
@@ -133,7 +136,7 @@ class MerchantLogic(object):
 
     def getInitialProducts(self):
         products = {}
-        for i in range(self.initialProducts):
+        for i in range(settings['initialProducts']):
             r = requests.get(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
             product = r.json()
             if product['product_id'] in products:
@@ -150,10 +153,10 @@ class MerchantLogic(object):
             print('failed to update offer', e)
 
     def adjust_prices(self, offer, min_price):
-        if min_price < 16:
-            offer['price'] = 32
+        if min_price < settings['minPriceMargin']:
+            offer['price'] = settings['maxPriceMargin']
         else:
-            offer['price'] = min(max(min_price - 1, 16), 32)
+            offer['price'] = min(max(min_price - settings['priceDecrease'], settings['minPriceMargin']), settings['maxPriceMargin'])
         self.update_offer(offer)
 
     def get_offers(self):

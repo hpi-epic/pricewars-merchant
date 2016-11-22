@@ -17,6 +17,7 @@ import json
 import random
 import threading
 import time
+from posixpath import join as urljoin
 
 import requests
 from flask import Flask, request, Response
@@ -115,7 +116,9 @@ class MerchantLogic(object):
         }
 
     def addOfferToMarketplace(self, offer):
-        r = requests.post(settings['marketplace_url'] + '/offers', json=offer)
+        url = urljoin(settings['marketplace_url'], '/offers')
+
+        r = requests.post(url, json=offer)
         print('addOfferToMarketplace', r.text)
         return r.json()['offer_id']
 
@@ -125,18 +128,24 @@ class MerchantLogic(object):
             "merchant_name": "Sample Merchant",
             "algorithm_name": "IncreasePrice"
         }
-        r = requests.post(settings['marketplace_url'] + '/merchants', json=requestObject)
+        url = urljoin(settings['marketplace_url'], '/merchants')
+
+        r = requests.post(url, json=requestObject)
         print('registerToMarketplace', r.json())
         return r.json()['merchant_id']
 
     def unRegisterToMarketplace(self):
+        url = urljoin(settings['marketplace_url'], '/merchants/{:d}'.format(self.merchantID))
         print('unRegisterToMarketplace')
-        requests.delete(settings['marketplace_url'] + '/merchants/{:d}'.format(self.merchantID))
+
+        requests.delete(url)
 
     def getInitialProducts(self):
+        url = urljoin(settings['producerEndpoint'], '/buy?merchant_id={:d}'.format(self.merchantID))
         products = {}
+
         for i in range(settings['initialProducts']):
-            r = requests.get(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
+            r = requests.get(url)
             product = r.json()
             if product['product_id'] in products:
                 products[product['product_id']]['amount'] += 1
@@ -146,8 +155,10 @@ class MerchantLogic(object):
 
     def update_offer(self, new_offer):
         print('update offer:', new_offer)
+        url = urljoin(settings['marketplace_url'], '/offers/{:d}'.format(new_offer['id']))
+
         try:
-            r = requests.put(settings['marketplace_url'] + '/offers/{:d}'.format(new_offer['id']), json=new_offer)
+            requests.put(url, json=new_offer)
         except Exception as e:
             print('failed to update offer', e)
 
@@ -160,7 +171,9 @@ class MerchantLogic(object):
         self.update_offer(offer)
 
     def get_offers(self):
-        r = requests.get(settings['marketplace_url'] + '/offers')
+        url = urljoin(settings['marketplace_url'], '/offers')
+
+        r = requests.get(url)
         offers = r.json()
         return offers
 
@@ -202,9 +215,9 @@ class MerchantLogic(object):
             product['amount'] += 1
             offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
             print('in this offer:', offer)
+            url = urljoin(settings['marketplace_url'], '/offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = product['amount']
-            r = requests.patch(settings['marketplace_url'] + '/offers/{:d}/restock'.format(offer['id']),
-                               json={'amount': 1})
+            r = requests.patch(url, json={'amount': 1})
         else:
             self.products.append(newProduct)
             newOffer = self.createOffer(newProduct)
@@ -213,7 +226,8 @@ class MerchantLogic(object):
 
     # returns product
     def buyRandomProduct(self):
-        r = requests.get(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
+        url = urljoin(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
+        r = requests.get(url)
         product = r.json()
         print('bought new product', product)
         return product

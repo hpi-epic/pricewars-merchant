@@ -27,7 +27,6 @@ settings = {
     'ownEndpoint': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplaceEndpoint': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
-    'minProfit': 1,
     'priceDecrease': 1,
 	'initialProducts': 5,
 	'minPriceMargin': 16,
@@ -107,7 +106,7 @@ class MerchantLogic(object):
             "uid": product['uid'],
             "quality": product['quality'],
             "amount": product['amount'],
-            "price": product['price'] + settings['minProfit'] + settings['maxPriceMargin'],
+            "price": product['price'] + settings['maxPriceMargin'],
             "shipping_time": {
                 "standard": settings['shipping'],
                 "prime": settings['primeShipping']

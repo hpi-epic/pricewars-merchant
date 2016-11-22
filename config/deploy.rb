@@ -52,7 +52,7 @@ namespace :deploy do
     on roles :all do
       within release_path do
       	execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install -r requirements.txt"
-        #execute "cd #{release_path}/simple_competition_logic/ && python main.py"
+        execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install mod_wsgi"
       end
     end
   end

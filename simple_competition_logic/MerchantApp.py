@@ -117,7 +117,7 @@ class MerchantLogic(object):
 
     @staticmethod
     def add_offer_to_marketplace(offer):
-        url = urljoin(settings['marketplace_url'], '/offers')
+        url = urljoin(settings['marketplace_url'], 'offers')
 
         r = requests.post(url, json=offer)
         return r.json()['offer_id']
@@ -129,20 +129,20 @@ class MerchantLogic(object):
             "merchant_name": "Sample Merchant",
             "algorithm_name": "IncreasePrice"
         }
-        url = urljoin(settings['marketplace_url'], '/merchants')
+        url = urljoin(settings['marketplace_url'], 'merchants')
 
         r = requests.post(url, json=request_object)
         print('registerToMarketplace', r.json())
         return r.json()['merchant_id']
 
     def unregister_to_marketplace(self):
-        url = urljoin(settings['marketplace_url'], '/merchants/{:d}'.format(self.merchantID))
+        url = urljoin(settings['marketplace_url'], 'merchants/{:d}'.format(self.merchantID))
         print('unRegisterToMarketplace')
 
         requests.delete(url)
 
     def get_initial_products(self):
-        url = urljoin(settings['producerEndpoint'], '/buy?merchant_id={:d}'.format(self.merchantID))
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
         products = {}
 
         for i in range(settings['initialProducts']):
@@ -157,7 +157,7 @@ class MerchantLogic(object):
     @staticmethod
     def update_offer(new_offer):
         print('update offer:', new_offer)
-        url = urljoin(settings['marketplace_url'], '/offers/{:d}'.format(new_offer['id']))
+        url = urljoin(settings['marketplace_url'], 'offers/{:d}'.format(new_offer['id']))
 
         try:
             requests.put(url, json=new_offer)
@@ -174,7 +174,7 @@ class MerchantLogic(object):
 
     @staticmethod
     def get_offers():
-        url = urljoin(settings['marketplace_url'], '/offers')
+        url = urljoin(settings['marketplace_url'], 'offers')
 
         r = requests.get(url)
         offers = r.json()
@@ -219,7 +219,7 @@ class MerchantLogic(object):
             product['amount'] += 1
             offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
             print('in this offer:', offer)
-            url = urljoin(settings['marketplace_url'], '/offers/{:d}/restock'.format(offer['id']))
+            url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = product['amount']
             r = requests.patch(url, json={'amount': 1})
         else:
@@ -230,7 +230,7 @@ class MerchantLogic(object):
 
     # returns product
     def buy_random_product(self):
-        url = urljoin(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
+        url = urljoin(settings['producerEndpoint'] + 'buy?merchant_id={:d}'.format(self.merchantID))
         r = requests.get(url)
         product = r.json()
         print('bought new product', product)

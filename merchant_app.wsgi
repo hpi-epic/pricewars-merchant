@@ -1,4 +1,4 @@
 import sys
-sys.path.insert(0, '/var/www/pricewars-merchant/current/simple_competition_logic/MerchantApp.py')
+sys.path.insert(0, '/var/www/pricewars-merchant/current/simple_competition_logic/')
 
 from MerchantApp import app as application

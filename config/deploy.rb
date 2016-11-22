@@ -51,7 +51,7 @@ namespace :deploy do
   task :start do
     on roles :all do
       within release_path do
-      	#execute "cd #{release}/simple_competition_logic/ && pip install -r requirements.txt"
+      	execute "cd #{release}/simple_competition_logic/ && sudo pip3 install -r requirements.txt"
         #execute "cd #{release}/simple_competition_logic/ && python main.py"
       end
     end

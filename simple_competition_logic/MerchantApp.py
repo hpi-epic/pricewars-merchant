@@ -24,15 +24,15 @@ from flask_cors import CORS
 
 settings = {
     'merchant_id': 0,
-    'ownEndpoint': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
-    'marketplaceEndpoint': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
+    'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
+    'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
-	'initialProducts': 5,
-	'minPriceMargin': 16,
-	'maxPriceMargin': 32,
-	'shipping': 5,
-	'primeShipping': 1
+    'initialProducts': 5,
+    'minPriceMargin': 16,
+    'maxPriceMargin': 32,
+    'shipping': 5,
+    'primeShipping': 1
 }
 
 
@@ -115,23 +115,23 @@ class MerchantLogic(object):
         }
 
     def addOfferToMarketplace(self, offer):
-        r = requests.post(settings['marketplaceEndpoint'] + '/offers', json=offer)
+        r = requests.post(settings['marketplace_url'] + '/offers', json=offer)
         print('addOfferToMarketplace', r.text)
         return r.json()['offer_id']
 
     def registerToMarketplace(self):
         requestObject = {
-            "api_endpoint_url": settings['ownEndpoint'],
+            "api_endpoint_url": settings['merchant_url'],
             "merchant_name": "Sample Merchant",
             "algorithm_name": "IncreasePrice"
         }
-        r = requests.post(settings['marketplaceEndpoint'] + '/merchants', json=requestObject)
+        r = requests.post(settings['marketplace_url'] + '/merchants', json=requestObject)
         print('registerToMarketplace', r.json())
         return r.json()['merchant_id']
 
     def unRegisterToMarketplace(self):
         print('unRegisterToMarketplace')
-        r = requests.delete(settings['marketplaceEndpoint'] + '/merchants/{:d}'.format(self.merchantID))
+        requests.delete(settings['marketplace_url'] + '/merchants/{:d}'.format(self.merchantID))
 
     def getInitialProducts(self):
         products = {}
@@ -147,7 +147,7 @@ class MerchantLogic(object):
     def update_offer(self, new_offer):
         print('update offer:', new_offer)
         try:
-            r = requests.put(settings['marketplaceEndpoint'] + '/offers/{:d}'.format(new_offer['id']), json=new_offer)
+            r = requests.put(settings['marketplace_url'] + '/offers/{:d}'.format(new_offer['id']), json=new_offer)
         except Exception as e:
             print('failed to update offer', e)
 
@@ -155,11 +155,12 @@ class MerchantLogic(object):
         if min_price < settings['minPriceMargin']:
             offer['price'] = settings['maxPriceMargin']
         else:
-            offer['price'] = min(max(min_price - settings['priceDecrease'], settings['minPriceMargin']), settings['maxPriceMargin'])
+            offer['price'] = min(max(min_price - settings['priceDecrease'], settings['minPriceMargin']),
+                                 settings['maxPriceMargin'])
         self.update_offer(offer)
 
     def get_offers(self):
-        r = requests.get(settings['marketplaceEndpoint'] + '/offers')
+        r = requests.get(settings['marketplace_url'] + '/offers')
         offers = r.json()
         return offers
 
@@ -202,7 +203,7 @@ class MerchantLogic(object):
             offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
             print('in this offer:', offer)
             offer['amount'] = product['amount']
-            r = requests.patch(settings['marketplaceEndpoint'] + '/offers/{:d}/restock'.format(offer['id']),
+            r = requests.patch(settings['marketplace_url'] + '/offers/{:d}/restock'.format(offer['id']),
                                json={'amount': 1})
         else:
             self.products.append(newProduct)
@@ -250,7 +251,10 @@ def set_state():
     next_state = request.json['nextState']
     print(next_state)
     if next_state == 'init':
-        settings.update({'ownEndpoint': request.json['merchant_url']}) if 'merchant_url' in request.json else None
+        # set endpoint url settings on init
+        for keyword in ['merchant_url', 'marketplace_url']:
+            if keyword in request.json:
+                settings.update({keyword: request.json[keyword]})
         print('updated settings', settings)
         if not merchantLogic:
             print('new merchant')

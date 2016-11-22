@@ -1,4 +1,4 @@
-### Doc:
+#   Doc:
 #   run this file - it starts HTTP Server (Thread 1) 
 #   post {nextState: 'init'} to Server:
 #       - it starts Logic in state 'init' (Thread 2) which registers to Market
@@ -33,26 +33,30 @@ settings = {
     'minPriceMargin': 16,
     'maxPriceMargin': 32,
     'shipping': 5,
-    'primeShipping': 1
+    'primeShipping': 1,
+    'debug': False
 }
 
 
-def getFromListByKey(dictList, key, value):
-    return [elem for elem in dictList if elem[key] == value][0]
+def get_from_list_by_key(dict_list, key, value):
+    return [elem for elem in dict_list if elem[key] == value][0]
 
 
 class MerchantLogic(object):
     def __init__(self):
         global settings
-        print('MerchantLogic created')
-        self.merchantID = self.registerToMarketplace()
-        settings.update({'merchant_id': self.merchantID})
-        self.state = 'init'
         self.execQueue = []
+        self.state = 'init'
+        self.interval = 5
+        self.thread = None
+        self.products = []
+        self.offers = []
 
-        self.runLogicLoop()
+        self.merchantID = self.register_to_marketplace()
+        settings.update({'merchant_id': self.merchantID})
+        self.run_logic_loop()
 
-    def runLogicLoop(self):
+    def run_logic_loop(self):
         self.interval = 3
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True  # Daemonize thread
@@ -61,7 +65,6 @@ class MerchantLogic(object):
     def run(self):
         """ Method that runs forever """
         while not self.state == 'exiting':
-            print('loop running, merchant in state:', self.state)
             # default interval to avoid busy waiting, but merchant logic should still
             # be in charge of setting the interval (that is random, currently, but could change)
             self.interval = 5
@@ -72,23 +75,20 @@ class MerchantLogic(object):
 
             time.sleep(self.interval)
 
-        self.onExit()
+        self.on_exit()
 
-    def gameInit(self):
-        self.products = self.getInitialProducts()
-        print('products', self.products)
+    def game_init(self):
+        self.products = self.get_initial_products()
         self.offers = []
 
         for product in self.products:
-            newOffer = self.createOffer(product)
-            newOffer['id'] = self.addOfferToMarketplace(newOffer)
+            newOffer = self.create_offer(product)
+            newOffer['id'] = self.add_offer_to_marketplace(newOffer)
             self.offers.append(newOffer)
-
-        print('offers', self.offers)
 
     def start(self):
         if self.state == 'init':
-            self.gameInit()
+            self.game_init()
         self.state = 'running'
 
     def stop(self):
@@ -97,10 +97,10 @@ class MerchantLogic(object):
     def terminate(self):
         self.state = 'exiting'
 
-    def onExit(self):
-        self.unRegisterToMarketplace()
+    def on_exit(self):
+        self.unregister_to_marketplace()
 
-    def createOffer(self, product):
+    def create_offer(self, product):
         return {
             "product_id": product['product_id'],
             "merchant_id": self.merchantID,
@@ -115,32 +115,33 @@ class MerchantLogic(object):
             "prime": True
         }
 
-    def addOfferToMarketplace(self, offer):
+    @staticmethod
+    def add_offer_to_marketplace(offer):
         url = urljoin(settings['marketplace_url'], '/offers')
 
         r = requests.post(url, json=offer)
-        print('addOfferToMarketplace', r.text)
         return r.json()['offer_id']
 
-    def registerToMarketplace(self):
-        requestObject = {
+    @staticmethod
+    def register_to_marketplace():
+        request_object = {
             "api_endpoint_url": settings['merchant_url'],
             "merchant_name": "Sample Merchant",
             "algorithm_name": "IncreasePrice"
         }
         url = urljoin(settings['marketplace_url'], '/merchants')
 
-        r = requests.post(url, json=requestObject)
+        r = requests.post(url, json=request_object)
         print('registerToMarketplace', r.json())
         return r.json()['merchant_id']
 
-    def unRegisterToMarketplace(self):
+    def unregister_to_marketplace(self):
         url = urljoin(settings['marketplace_url'], '/merchants/{:d}'.format(self.merchantID))
         print('unRegisterToMarketplace')
 
         requests.delete(url)
 
-    def getInitialProducts(self):
+    def get_initial_products(self):
         url = urljoin(settings['producerEndpoint'], '/buy?merchant_id={:d}'.format(self.merchantID))
         products = {}
 
@@ -153,7 +154,8 @@ class MerchantLogic(object):
                 products[product['product_id']] = product
         return list(products.values())
 
-    def update_offer(self, new_offer):
+    @staticmethod
+    def update_offer(new_offer):
         print('update offer:', new_offer)
         url = urljoin(settings['marketplace_url'], '/offers/{:d}'.format(new_offer['id']))
 
@@ -170,7 +172,8 @@ class MerchantLogic(object):
                                  settings['maxPriceMargin'])
         self.update_offer(offer)
 
-    def get_offers(self):
+    @staticmethod
+    def get_offers():
         url = urljoin(settings['marketplace_url'], '/offers')
 
         r = requests.get(url)
@@ -186,12 +189,13 @@ class MerchantLogic(object):
 
         offers = self.get_offers()
         for product in self.products:
-            competitor_offers = [offer['price'] for offer in offers if
-                                 offer['merchant_id'] != self.merchantID and offer['product_id'] == product[
-                                     'product_id']]
+            competitor_offers = []
+            for offer in offers:
+                if offer['merchant_id'] != self.merchantID and offer['product_id'] == product['product_id']:
+                    competitor_offers.append(offer['price'])
             if len(competitor_offers) > 0:
-                self.adjust_prices(getFromListByKey(self.offers, 'product_id', product['product_id']),
-                                   min(competitor_offers))
+                offer = get_from_list_by_key(self.offers, 'product_id', product['product_id'])
+                self.adjust_prices(offer, min(competitor_offers))
 
     def sold_product(self, offer_id, amount, price):
         print('soldProduct')
@@ -205,27 +209,27 @@ class MerchantLogic(object):
             print('product {:d} is out of stock!'.format(product['product_id']))
 
         # sample logic: TODO: improve
-        self.buyProductAndUpdateOffer()
+        self.buy_product_and_update_offer()
 
-    def buyProductAndUpdateOffer(self):
+    def buy_product_and_update_offer(self):
         print('buy Product and update')
-        newProduct = self.buyRandomProduct()
-        if newProduct['product_id'] in self.products:
-            product = getFromListByKey(self.products, 'product_id', newProduct['product_id'])
+        new_product = self.buy_random_product()
+        if new_product['product_id'] in self.products:
+            product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
             product['amount'] += 1
-            offer = getFromListByKey(self.offers, 'product_id', newProduct['product_id'])
+            offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
             print('in this offer:', offer)
             url = urljoin(settings['marketplace_url'], '/offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = product['amount']
             r = requests.patch(url, json={'amount': 1})
         else:
-            self.products.append(newProduct)
-            newOffer = self.createOffer(newProduct)
-            newOffer['id'] = self.addOfferToMarketplace(newOffer)
-            self.offers.append(newOffer)
+            self.products.append(new_product)
+            new_offer = self.create_offer(new_product)
+            new_offer['id'] = self.add_offer_to_marketplace(new_offer)
+            self.offers.append(new_offer)
 
     # returns product
-    def buyRandomProduct(self):
+    def buy_random_product(self):
         url = urljoin(settings['producerEndpoint'] + '/buy?merchant_id={:d}'.format(self.merchantID))
         r = requests.get(url)
         product = r.json()

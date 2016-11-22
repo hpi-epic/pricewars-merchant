@@ -24,9 +24,9 @@ from flask_cors import CORS
 
 settings = {
     'merchant_id': 0,
-    'ownEndpoint': 'http://127.0.0.1:5000',
-    'marketplaceEndpoint': 'http://192.168.2.1:8080',
-    'producerEndpoint': 'http://192.168.2.7:3000',
+    'ownEndpoint': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
+    'marketplaceEndpoint': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
+    'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'minProfit': 1,
     'priceIncrease': 5,
     'priceDecrease': 1

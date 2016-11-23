@@ -40,7 +40,10 @@ settings = {
 
 
 def get_from_list_by_key(dict_list, key, value):
-    return [elem for elem in dict_list if elem[key] == value][0]
+    elements = [elem for elem in dict_list if elem[key] == value]
+    if elements:
+        return elements[0]
+    return None
 
 
 class MerchantLogic(object):

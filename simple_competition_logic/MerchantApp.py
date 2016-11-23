@@ -221,14 +221,15 @@ class MerchantLogic(object):
     def buy_product_and_update_offer(self):
         print('buy Product and update')
         new_product = self.buy_random_product()
-        if new_product['product_id'] in self.products:
-            product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
-            product['amount'] += 1
+
+        old_product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
+        if old_product:
+            old_product['amount'] += 1
             offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
             print('in this offer:', offer)
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
-            offer['amount'] = product['amount']
-            r = self.request_session.patch(url, json={'amount': 1})
+            offer['amount'] = old_product['amount']
+            self.request_session.patch(url, json={'amount': 1})
         else:
             self.products.append(new_product)
             new_offer = self.create_offer(new_product)

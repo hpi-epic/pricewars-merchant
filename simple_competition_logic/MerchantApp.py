@@ -62,7 +62,7 @@ class MerchantLogic(object):
     def run_logic_loop(self):
         self.interval = 3
         self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True  # Daemonize thread
+        self.thread.daemon = True  # Demonize thread
         self.thread.start()  # Start the execution
 
     def run(self):
@@ -74,7 +74,12 @@ class MerchantLogic(object):
 
             if self.state == 'running':
                 self.interval = random.randint(2, 10) / 10.0
-                self.execute_logic()
+                try:
+                    self.execute_logic()
+                except Exception as e:
+                    print('error on merchantLogic:\n', e)
+                    print('safely stop Merchant')
+                    self.stop()
 
             time.sleep(self.interval)
 
@@ -198,17 +203,20 @@ class MerchantLogic(object):
 
     def sold_product(self, offer_id, amount, price):
         print('soldProduct')
-        offer = [offer for offer in self.offers if offer['id'] == offer_id][0]
-        print('found offer:', offer)
-        offer['amount'] -= amount
-        product = [product for product in self.products if product['product_id'] == offer['product_id']][0]
-        print('found product:', product)
-        product['amount'] -= amount
-        if product['amount'] <= 0:
-            print('product {:d} is out of stock!'.format(product['product_id']))
+        offer = [offer for offer in self.offers if offer['id'] == offer_id]
+        if offer:
+            offer = offer[0]
+            print('found offer:', offer)
+            offer['amount'] -= amount
+            product = [product for product in self.products if product['product_id'] == offer['product_id']][0]
+            print('found product:', product)
 
-        # sample logic: TODO: improve
-        self.buy_product_and_update_offer()
+            product['amount'] -= amount
+            if product['amount'] <= 0:
+                print('product {:d} is out of stock!'.format(product['product_id']))
+
+            # sample logic: TODO: improve
+            self.buy_product_and_update_offer()
 
     def buy_product_and_update_offer(self):
         print('buy Product and update')

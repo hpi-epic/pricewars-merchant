@@ -18,6 +18,7 @@ import random
 import threading
 import time
 from posixpath import join as urljoin
+import traceback
 
 import requests
 from flask import Flask, request, Response
@@ -78,6 +79,7 @@ class MerchantLogic(object):
                     self.execute_logic()
                 except Exception as e:
                     print('error on merchantLogic:\n', e)
+                    traceback.print_exc()
                     print('safely stop Merchant')
                     self.stop()
 

@@ -25,9 +25,9 @@ class MerchantTestCase(unittest.TestCase):
             'debug': False
         }
         js = json.dumps(settings)
-        resp = Response(js, status=200, mimetype='application/json')
-        return resp
-        assert b'resp' in rv.data
+        assert js in rv.data.decode("utf-8")
+        
+    
         
 if __name__ == '__main__':
     unittest.main()

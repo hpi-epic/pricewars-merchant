@@ -1,5 +1,5 @@
 #   Doc:
-#   run this file - it starts HTTP Server (Thread 1) 
+#   run this file - it starts HTTP Server (Thread 1)
 #   post {nextState: 'init'} to Server:
 #       - it starts Logic in state 'init' (Thread 2) which registers to Market
 #
@@ -56,7 +56,7 @@ class MerchantLogic(object):
         self.products = []
         self.offers = []
         self.request_session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
+        adapter = requests.adapters.HTTPAdapter(pool_connections=300, pool_maxsize=300)
         self.request_session.mount('http://', adapter)
 
         self.merchantID = self.register_to_marketplace()

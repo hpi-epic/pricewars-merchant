@@ -287,9 +287,10 @@ def set_state():
             if keyword in request.json:
                 settings.update({keyword: request.json[keyword]})
         print('updated settings', settings)
-        if not merchantLogic:
-            print('new merchant')
-            merchantLogic = MerchantLogic()
+        if merchantLogic:
+            merchantLogic.terminate()
+        print('new merchant')
+        merchantLogic = MerchantLogic()
     elif next_state == 'start':
         print('merchant start')
         merchantLogic.start()

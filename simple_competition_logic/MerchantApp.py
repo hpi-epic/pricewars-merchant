@@ -117,6 +117,7 @@ class MerchantLogic(object):
         return {
             "product_id": product['product_id'],
             "merchant_id": self.merchantID,
+            "signature": product['signature'],
             "uid": product['uid'],
             "quality": product['quality'],
             "amount": product['amount'],
@@ -230,10 +231,12 @@ class MerchantLogic(object):
         old_product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
         if old_product:
             old_product['amount'] += 1
+            old_product['signature'] = new_product['signature']
             offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
             print('in this offer:', offer)
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']
+            offer['signature'] = old_product['signature']
             self.request_session.patch(url, json={'amount': 1})
         else:
             self.products.append(new_product)

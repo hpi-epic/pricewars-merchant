@@ -41,12 +41,18 @@ class MerchantTestCase(unittest.TestCase):
             'price': 0,
             'prime': True
         }
-        rv = self.app.post('/sold', data=json.dumps(dict(sold_offer)),content_type='application/json')
+        rv = self.app.post('/sold', data=json.dumps(dict(sold_offer)), content_type='application/json')
         response_json = json.loads(rv.data.decode('utf-8'))
         assert response_json == {}
         
 
-    
-    
+    def test_post_settings_execute(self):
+        state = {
+            'nextState': ''
+        }
+        rv = self.app.post('/settings/execution', data=json.dumps(dict(state)), content_type='application/json')
+        response_json = json.loads(rv.data.decode('utf-8'))
+        assert response_json == {}
+        
 if __name__ == '__main__':
     unittest.main()

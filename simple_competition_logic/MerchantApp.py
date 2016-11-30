@@ -117,6 +117,7 @@ class MerchantLogic(object):
         return {
             "product_id": product['product_id'],
             "merchant_id": self.merchantID,
+            "signature": product['signature'],
             "uid": product['uid'],
             "quality": product['quality'],
             "amount": product['amount'],
@@ -230,10 +231,12 @@ class MerchantLogic(object):
         old_product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
         if old_product:
             old_product['amount'] += 1
+            old_product['signature'] = new_product['signature']
             offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
             print('in this offer:', offer)
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']
+            offer['signature'] = old_product['signature']
             self.request_session.patch(url, json={'amount': 1})
         else:
             self.products.append(new_product)
@@ -255,14 +258,19 @@ CORS(app)
 merchantLogic = None
 
 
-def json_response(obj):
+def json_response(obj, status=200):
     js = json.dumps(obj)
-    resp = Response(js, status=200, mimetype='application/json')
+    resp = Response(js, status=status, mimetype='application/json')
     return resp
 
 
 @app.route('/settings', methods=['GET'])
 def get_settings():
+    global settings
+    state = 'No merchant initialized, i.e. not registered! You should not be able to see this message. Most certainly an error on the marketplace!'
+    if merchantLogic:
+        state = merchantLogic.state
+    settings.update({'state': state})
     return json_response(settings)
 
 
@@ -327,6 +335,7 @@ def item_sold():
         merchantLogic.execQueue.append((merchantLogic.sold_product, (offer_id, amount, price)))
     else:
         print('merchantlogic not started')
+        return json_response({}, status=428)
 
     return json_response({})
 

@@ -288,7 +288,7 @@ def get_settings():
 def put_settings():
     global settings
     new_settings = request.json
-    new_settings = dict([key, type(settings[key])(new_settings[key]) for key in new_settings])
+    new_settings = dict([(key, type(settings[key])(new_settings[key])) for key in new_settings])
     settings.update(new_settings)
     return json_response(settings)
 

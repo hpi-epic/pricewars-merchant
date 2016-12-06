@@ -178,12 +178,19 @@ class MerchantLogic(object):
         except Exception as e:
             print('failed to update offer', e)
 
-    def adjust_prices(self, offer, min_price):
-        if min_price < settings['minPriceMargin']:
-            offer['price'] = settings['maxPriceMargin']
-        else:
-            offer['price'] = min(max(min_price - settings['priceDecrease'], settings['minPriceMargin']),
-                                 settings['maxPriceMargin'])
+    def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
+        if not offer or not product:
+            return
+        
+        min_price = product['price'] + settings['minPriceMargin']
+        max_price = product['price'] + settings['maxPriceMargin']
+        
+        price = lowest_competitor_price - settings['priceDecrease']
+        price = min(price, max_price)
+        if price < min_price:
+            price = max_price
+            
+        offer['price'] = price
         self.update_offer(offer)
 
     def get_offers(self, ):
@@ -208,7 +215,7 @@ class MerchantLogic(object):
                     competitor_offers.append(offer['price'])
             if len(competitor_offers) > 0:
                 offer = get_from_list_by_key(self.offers, 'product_id', product['product_id'])
-                self.adjust_prices(offer, min(competitor_offers))
+                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
     def sold_product(self, offer_id, amount, price):
         print('soldProduct')

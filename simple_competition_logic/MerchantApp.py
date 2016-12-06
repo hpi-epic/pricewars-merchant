@@ -108,7 +108,10 @@ class MerchantLogic(object):
         self.state = 'stopping'
 
     def terminate(self):
-        self.state = 'exiting'
+        if self.state == 'init':
+            self.on_exit()
+        else:
+            self.state = 'exiting'
 
     def on_exit(self):
         self.unregister_to_marketplace()

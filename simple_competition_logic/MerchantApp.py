@@ -254,7 +254,7 @@ class MerchantLogic(object):
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']
             offer['signature'] = old_product['signature']
-            self.request_session.patch(url, json={'amount': 1, 'signature': old_product['signature']})
+            self.request_session.patch(url, json={'amount': 1, 'signature': offer['signature']})
         else:
             self.products.append(new_product)
             new_offer = self.create_offer(new_product)

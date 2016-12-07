@@ -80,7 +80,7 @@ class MerchantLogic(object):
 
             if self.state == 'running':
                 #self.interval = random.randint(2, 10) / 10.0
-                self.interval = settings.interval
+                self.interval = self.settings.interval
                 try:
                     self.execute_logic()
                 except Exception as e:

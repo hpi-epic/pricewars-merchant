@@ -108,7 +108,7 @@ class MerchantLogic(object):
                 url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
                 offer['amount'] = old_product['amount']
                 offer['signature'] = old_product['signature']
-                self.request_session.patch(url2, json={'amount': 1})
+                self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
             else:
                 newOffer = self.create_offer(product)
                 products[product['uid']] = product
@@ -252,7 +252,7 @@ class MerchantLogic(object):
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']
             offer['signature'] = old_product['signature']
-            self.request_session.patch(url, json={'amount': 1})
+            self.request_session.patch(url, json={'amount': 1, 'signature': offer['signature']})
         else:
             self.products.append(new_product)
             new_offer = self.create_offer(new_product)
@@ -302,7 +302,7 @@ def put_settings():
     new_settings = request.json
     new_settings = dict([(key, cast_to_expected_type(key, new_settings[key])) for key in new_settings])
     settings.update(new_settings)
-    
+
     return json_response(settings)
 
 

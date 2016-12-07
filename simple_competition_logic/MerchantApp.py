@@ -292,9 +292,17 @@ def get_settings():
 @app.route('/settings', methods=['PUT', 'POST'])
 def put_settings():
     global settings
+    
+    def cast_to_expected_type(key, value):
+        if key in settings:
+            return type(settings[key])(value)
+        else:
+            return value
+
     new_settings = request.json
-    new_settings = dict([(key, type(settings[key])(new_settings[key])) for key in new_settings])
+    new_settings = dict([(key, cast_to_expected_type(key, new_settings[key])) for key in new_settings])
     settings.update(new_settings)
+    
     return json_response(settings)
 
 

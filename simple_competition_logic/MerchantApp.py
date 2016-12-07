@@ -31,7 +31,7 @@ settings = {
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
-    'initialProducts': 5,
+    'initialProducts': 25,
     'minPriceMargin': 16,
     'maxPriceMargin': 32,
     'shipping': 5,
@@ -91,9 +91,7 @@ class MerchantLogic(object):
 
         self.on_exit()
 
-    def game_init(self):
-        self.products = self.get_initial_products()
-        
+    def game_init(self):        
         url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
         products = {}
         offers = {}

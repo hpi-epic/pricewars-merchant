@@ -24,6 +24,7 @@ import requests
 from flask import Flask, request, Response
 from flask_cors import CORS
 
+# TODO: use config.ini file for initial endpoints or remove their hardcoded strings if unused
 settings = {
     'merchant_id': 0,
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
@@ -57,7 +58,7 @@ class MerchantLogic(object):
         self.offers = []
         self.request_session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections=300, pool_maxsize=300)
-        self.request_session.mount('http://', adapter)
+        self.request_session.mount('http://', adapter) # TODO: what is with https?
 
         self.merchantID = self.register_to_marketplace()
         settings.update({'merchant_id': self.merchantID})
@@ -181,15 +182,15 @@ class MerchantLogic(object):
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
         if not offer or not product:
             return
-        
+
         min_price = product['price'] + settings['minPriceMargin']
         max_price = product['price'] + settings['maxPriceMargin']
-        
+
         price = lowest_competitor_price - settings['priceDecrease']
         price = min(price, max_price)
         if price < min_price:
             price = max_price
-            
+
         offer['price'] = price
         self.update_offer(offer)
 

@@ -80,7 +80,7 @@ class MerchantLogic(object):
 
             if self.state == 'running':
                 #self.interval = random.randint(2, 10) / 10.0
-                self.interval = self.settings.interval
+                self.interval = settings['interval']
                 try:
                     self.execute_logic()
                 except Exception as e:
@@ -93,15 +93,15 @@ class MerchantLogic(object):
 
         self.on_exit()
 
-    def game_init(self):        
+    def game_init(self):
         url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
         products = {}
         offers = {}
-        
+
         for i in range(settings['initialProducts']):
             r = self.request_session.get(url)
             product = r.json()
-            
+
             old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
             if old_product:
                 old_product['amount'] += 1
@@ -116,7 +116,7 @@ class MerchantLogic(object):
                 products[product['uid']] = product
                 newOffer['id'] = self.add_offer_to_marketplace(newOffer)
                 self.offers.append(newOffer)
-                
+
         self.products = list(products.values())
 
     def start(self):
@@ -294,7 +294,7 @@ def get_settings():
 @app.route('/settings', methods=['PUT', 'POST'])
 def put_settings():
     global settings
-    
+
     def cast_to_expected_type(key, value):
         if key in settings:
             return type(settings[key])(value)
@@ -304,7 +304,7 @@ def put_settings():
     new_settings = request.json
     new_settings = dict([(key, cast_to_expected_type(key, new_settings[key])) for key in new_settings])
     settings.update(new_settings)
-    
+
     return json_response(settings)
 
 

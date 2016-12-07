@@ -93,12 +93,31 @@ class MerchantLogic(object):
 
     def game_init(self):
         self.products = self.get_initial_products()
-        self.offers = []
-
-        for product in self.products:
-            newOffer = self.create_offer(product)
-            newOffer['id'] = self.add_offer_to_marketplace(newOffer)
-            self.offers.append(newOffer)
+        
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
+        products = {}
+        offers = {}
+        
+        for i in range(settings['initialProducts']):
+            r = self.request_session.get(url)
+            product = r.json()
+            
+            old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
+            if old_product:
+                old_product['amount'] += 1
+                old_product['signature'] = new_product['signature']
+                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
+                url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
+                offer['amount'] = old_product['amount']
+                offer['signature'] = old_product['signature']
+                self.request_session.patch(url2, json={'amount': 1})
+            else:
+                newOffer = self.create_offer(product)
+                products[product['uid']] = product
+                newOffer['id'] = self.add_offer_to_marketplace(newOffer)
+                self.offers.append(newOffer)
+                
+        self.products = list(products.values())
 
     def start(self):
         if self.state == 'init':
@@ -157,19 +176,6 @@ class MerchantLogic(object):
 
         self.request_session.delete(url)
 
-    def get_initial_products(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
-        products = {}
-
-        for i in range(settings['initialProducts']):
-            r = self.request_session.get(url)
-            product = r.json()
-            if product['product_id'] in products:
-                products[product['product_id']]['amount'] += 1
-            else:
-                products[product['product_id']] = product
-        return list(products.values())
-
     def update_offer(self, new_offer):
         print('update offer:', new_offer)
         url = urljoin(settings['marketplace_url'], 'offers/{:d}'.format(new_offer['id']))
@@ -225,7 +231,7 @@ class MerchantLogic(object):
             offer = offer[0]
             print('found offer:', offer)
             offer['amount'] -= amount
-            product = [product for product in self.products if product['product_id'] == offer['product_id']][0]
+            product = [product for product in self.products if product['uid'] == offer['uid']][0]
             print('found product:', product)
 
             product['amount'] -= amount
@@ -239,11 +245,11 @@ class MerchantLogic(object):
         print('buy Product and update')
         new_product = self.buy_random_product()
 
-        old_product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
+        old_product = get_from_list_by_key(self.products, 'uid', new_product['uid'])
         if old_product:
             old_product['amount'] += 1
             old_product['signature'] = new_product['signature']
-            offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
+            offer = get_from_list_by_key(self.offers, 'uid', new_product['uid'])
             print('in this offer:', offer)
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']

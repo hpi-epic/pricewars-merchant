@@ -31,6 +31,7 @@ settings = {
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
+    'interval': 10,
     'initialProducts': 25,
     'minPriceMargin': 16,
     'maxPriceMargin': 32,
@@ -78,7 +79,8 @@ class MerchantLogic(object):
             self.interval = 5
 
             if self.state == 'running':
-                self.interval = random.randint(2, 10) / 10.0
+                #self.interval = random.randint(2, 10) / 10.0
+                self.interval = settings.interval
                 try:
                     self.execute_logic()
                 except Exception as e:
@@ -108,7 +110,7 @@ class MerchantLogic(object):
                 url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
                 offer['amount'] = old_product['amount']
                 offer['signature'] = old_product['signature']
-                self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
+                self.request_session.patch(url2, json={'amount': 1})
             else:
                 newOffer = self.create_offer(product)
                 products[product['uid']] = product
@@ -252,7 +254,7 @@ class MerchantLogic(object):
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']
             offer['signature'] = old_product['signature']
-            self.request_session.patch(url, json={'amount': 1, 'signature': offer['signature']})
+            self.request_session.patch(url, json={'amount': 1})
         else:
             self.products.append(new_product)
             new_offer = self.create_offer(new_product)
@@ -302,7 +304,7 @@ def put_settings():
     new_settings = request.json
     new_settings = dict([(key, cast_to_expected_type(key, new_settings[key])) for key in new_settings])
     settings.update(new_settings)
-
+    
     return json_response(settings)
 
 

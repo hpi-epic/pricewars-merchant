@@ -216,10 +216,10 @@ class MerchantLogic(object):
         for product in self.products:
             competitor_offers = []
             for offer in offers:
-                if offer['merchant_id'] != self.merchantID and offer['product_id'] == product['product_id']:
+                if offer['merchant_id'] != self.merchantID and offer['uid'] == product['uid']:
                     competitor_offers.append(offer['price'])
             if len(competitor_offers) > 0:
-                offer = get_from_list_by_key(self.offers, 'product_id', product['product_id'])
+                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
     def sold_product(self, offer_id, amount, price):
@@ -234,7 +234,7 @@ class MerchantLogic(object):
 
             product['amount'] -= amount
             if product['amount'] <= 0:
-                print('product {:d} is out of stock!'.format(product['product_id']))
+                print('product {:d} is out of stock!'.format(product['uid']))
 
             # sample logic: TODO: improve
             self.buy_product_and_update_offer()

@@ -31,7 +31,7 @@ settings = {
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
-    'interval': 1,
+    'interval': 10,
     'initialProducts': 25,
     'minPriceMargin': 16,
     'maxPriceMargin': 32,

@@ -98,4 +98,9 @@ class MerchantBaseLogic:
 
     @abstractmethod
     def sold_offer(self, offer_json):
+        """
+        Do not block execution
+        :param offer_json:
+        :return:
+        """
         pass

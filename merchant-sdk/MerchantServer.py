@@ -25,9 +25,6 @@ class MerchantServer:
 
         self.register_routes()
 
-    def run(self, *args, **kwargs):
-        self.app.run(*args, **kwargs)
-
     def log(self, *msg):
         if self.server_settings['debug']:
             print(*msg)

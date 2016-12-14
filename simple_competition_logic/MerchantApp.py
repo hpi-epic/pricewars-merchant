@@ -2,12 +2,14 @@ import argparse
 from posixpath import join as urljoin
 import requests
 import requests.adapters
+from random import randint
 
 import sys
 sys.path.append('../merchant-sdk')
 
 from MerchantBaseLogic import MerchantBaseLogic
 from MerchantServer import MerchantServer
+import random
 
 settings = {
     'merchant_id': 0,
@@ -15,7 +17,8 @@ settings = {
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
-    'interval': 10,
+    'intervalMin': 1.0,
+    'intervalMax': 1.0,
     'initialProducts': 25,
     'minPriceMargin': 16,
     'maxPriceMargin': 32,
@@ -138,7 +141,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
-        return self.settings['interval']
+        return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
     def register_to_marketplace(self):
         request_object = {

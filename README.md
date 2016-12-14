@@ -21,5 +21,5 @@ pip3 install -r simple_competition_logic/requirements.txt
 then, run application with
 
 ```
-python3 simple_competition_logic/MerchantApp.py --port 5000
+python3 MerchantApp.py --port 5000
 ```

@@ -252,8 +252,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
 
 merchant_logic = MerchantSampleLogic()
-app = MerchantServer(merchant_logic)
-
+merchant_server = MerchantServer(merchant_logic)
+app = merchant_server.app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PriceWars Merchant')

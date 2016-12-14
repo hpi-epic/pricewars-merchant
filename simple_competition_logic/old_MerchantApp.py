@@ -24,14 +24,15 @@ import requests
 from flask import Flask, request, Response
 from flask_cors import CORS
 
-# TODO: use config.ini file for initial endpoints or remove them if unused
+# TODO: use config.ini file for initial endpoints or remove their hardcoded strings if unused
 settings = {
     'merchant_id': 0,
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
-    'initialProducts': 5,
+    'interval': 10,
+    'initialProducts': 25,
     'minPriceMargin': 16,
     'maxPriceMargin': 32,
     'shipping': 5,
@@ -58,7 +59,7 @@ class MerchantLogic(object):
         self.offers = []
         self.request_session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections=300, pool_maxsize=300)
-        self.request_session.mount('http://', adapter) #TODO: what is with https ?
+        self.request_session.mount('http://', adapter) # TODO: what is with https?
 
         self.merchantID = self.register_to_marketplace()
         settings.update({'merchant_id': self.merchantID})
@@ -78,7 +79,8 @@ class MerchantLogic(object):
             self.interval = 5
 
             if self.state == 'running':
-                self.interval = random.randint(2, 10) / 10.0
+                #self.interval = random.randint(2, 10) / 10.0
+                self.interval = settings['interval']
                 try:
                     self.execute_logic()
                 except Exception as e:
@@ -92,13 +94,30 @@ class MerchantLogic(object):
         self.on_exit()
 
     def game_init(self):
-        self.products = self.get_initial_products()
-        self.offers = []
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
+        products = {}
+        offers = {}
 
-        for product in self.products:
-            newOffer = self.create_offer(product)
-            newOffer['id'] = self.add_offer_to_marketplace(newOffer)
-            self.offers.append(newOffer)
+        for i in range(settings['initialProducts']):
+            r = self.request_session.get(url)
+            product = r.json()
+
+            old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
+            if old_product:
+                old_product['amount'] += 1
+                old_product['signature'] = new_product['signature']
+                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
+                url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
+                offer['amount'] = old_product['amount']
+                offer['signature'] = old_product['signature']
+                self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
+            else:
+                newOffer = self.create_offer(product)
+                products[product['uid']] = product
+                newOffer['id'] = self.add_offer_to_marketplace(newOffer)
+                self.offers.append(newOffer)
+
+        self.products = list(products.values())
 
     def start(self):
         if self.state == 'init':
@@ -109,7 +128,10 @@ class MerchantLogic(object):
         self.state = 'stopping'
 
     def terminate(self):
-        self.state = 'exiting'
+        if self.state == 'init':
+            self.on_exit()
+        else:
+            self.state = 'exiting'
 
     def on_exit(self):
         self.unregister_to_marketplace()
@@ -118,6 +140,7 @@ class MerchantLogic(object):
         return {
             "product_id": product['product_id'],
             "merchant_id": self.merchantID,
+            "signature": product['signature'],
             "uid": product['uid'],
             "quality": product['quality'],
             "amount": product['amount'],
@@ -153,19 +176,6 @@ class MerchantLogic(object):
 
         self.request_session.delete(url)
 
-    def get_initial_products(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchantID))
-        products = {}
-
-        for i in range(settings['initialProducts']):
-            r = self.request_session.get(url)
-            product = r.json()
-            if product['product_id'] in products:
-                products[product['product_id']]['amount'] += 1
-            else:
-                products[product['product_id']] = product
-        return list(products.values())
-
     def update_offer(self, new_offer):
         print('update offer:', new_offer)
         url = urljoin(settings['marketplace_url'], 'offers/{:d}'.format(new_offer['id']))
@@ -175,12 +185,19 @@ class MerchantLogic(object):
         except Exception as e:
             print('failed to update offer', e)
 
-    def adjust_prices(self, offer, min_price):
-        if min_price < settings['minPriceMargin']:
-            offer['price'] = settings['maxPriceMargin']
-        else:
-            offer['price'] = min(max(min_price - settings['priceDecrease'], settings['minPriceMargin']),
-                                 settings['maxPriceMargin'])
+    def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
+        if not offer or not product:
+            return
+
+        min_price = product['price'] + settings['minPriceMargin']
+        max_price = product['price'] + settings['maxPriceMargin']
+
+        price = lowest_competitor_price - settings['priceDecrease']
+        price = min(price, max_price)
+        if price < min_price:
+            price = max_price
+
+        offer['price'] = price
         self.update_offer(offer)
 
     def get_offers(self, ):
@@ -201,11 +218,11 @@ class MerchantLogic(object):
         for product in self.products:
             competitor_offers = []
             for offer in offers:
-                if offer['merchant_id'] != self.merchantID and offer['product_id'] == product['product_id']:
+                if offer['merchant_id'] != self.merchantID and offer['uid'] == product['uid']:
                     competitor_offers.append(offer['price'])
             if len(competitor_offers) > 0:
-                offer = get_from_list_by_key(self.offers, 'product_id', product['product_id'])
-                self.adjust_prices(offer, min(competitor_offers))
+                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
+                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
     def sold_product(self, offer_id, amount, price):
         print('soldProduct')
@@ -214,12 +231,12 @@ class MerchantLogic(object):
             offer = offer[0]
             print('found offer:', offer)
             offer['amount'] -= amount
-            product = [product for product in self.products if product['product_id'] == offer['product_id']][0]
+            product = [product for product in self.products if product['uid'] == offer['uid']][0]
             print('found product:', product)
 
             product['amount'] -= amount
             if product['amount'] <= 0:
-                print('product {:d} is out of stock!'.format(product['product_id']))
+                print('product {:d} is out of stock!'.format(product['uid']))
 
             # sample logic: TODO: improve
             self.buy_product_and_update_offer()
@@ -228,14 +245,16 @@ class MerchantLogic(object):
         print('buy Product and update')
         new_product = self.buy_random_product()
 
-        old_product = get_from_list_by_key(self.products, 'product_id', new_product['product_id'])
+        old_product = get_from_list_by_key(self.products, 'uid', new_product['uid'])
         if old_product:
             old_product['amount'] += 1
-            offer = get_from_list_by_key(self.offers, 'product_id', new_product['product_id'])
+            old_product['signature'] = new_product['signature']
+            offer = get_from_list_by_key(self.offers, 'uid', new_product['uid'])
             print('in this offer:', offer)
             url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
             offer['amount'] = old_product['amount']
-            self.request_session.patch(url, json={'amount': 1})
+            offer['signature'] = old_product['signature']
+            self.request_session.patch(url, json={'amount': 1, 'signature': offer['signature']})
         else:
             self.products.append(new_product)
             new_offer = self.create_offer(new_product)
@@ -256,22 +275,36 @@ CORS(app)
 merchantLogic = None
 
 
-def json_response(obj):
+def json_response(obj, status=200):
     js = json.dumps(obj)
-    resp = Response(js, status=200, mimetype='application/json')
+    resp = Response(js, status=status, mimetype='application/json')
     return resp
 
 
 @app.route('/settings', methods=['GET'])
 def get_settings():
+    global settings
+    state = 'No merchant initialized, i.e. not registered! You should not be able to see this message. Most certainly an error on the marketplace!'
+    if merchantLogic:
+        state = merchantLogic.state
+    settings.update({'state': state})
     return json_response(settings)
 
 
 @app.route('/settings', methods=['PUT', 'POST'])
 def put_settings():
     global settings
+
+    def cast_to_expected_type(key, value):
+        if key in settings:
+            return type(settings[key])(value)
+        else:
+            return value
+
     new_settings = request.json
+    new_settings = dict([(key, cast_to_expected_type(key, new_settings[key])) for key in new_settings])
     settings.update(new_settings)
+
     return json_response(settings)
 
 
@@ -328,6 +361,7 @@ def item_sold():
         merchantLogic.execQueue.append((merchantLogic.sold_product, (offer_id, amount, price)))
     else:
         print('merchantlogic not started')
+        return json_response({}, status=428)
 
     return json_response({})
 

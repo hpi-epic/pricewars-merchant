@@ -25,9 +25,6 @@ class MerchantServer:
 
         self.register_routes()
 
-    def run(self, *args, **kwargs):
-        self.app.run(*args, **kwargs)
-
     def log(self, *msg):
         if self.server_settings['debug']:
             print(*msg)
@@ -37,7 +34,9 @@ class MerchantServer:
     '''
 
     def get_all_settings(self):
-        tmp_settings = {}
+        tmp_settings = {
+            'state': self.merchant_logic.get_state()
+        }
         tmp_settings.update(self.merchant_logic.get_settings())
         tmp_settings.update(self.server_settings)
         return tmp_settings

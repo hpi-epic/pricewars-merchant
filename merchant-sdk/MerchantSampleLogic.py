@@ -1,11 +1,7 @@
 import argparse
-import json
-import random
-import threading
-import time
 from posixpath import join as urljoin
-import traceback
 import requests
+import requests.adapters
 
 from MerchantBaseLogic import MerchantBaseLogic
 from MerchantServer import MerchantServer
@@ -42,9 +38,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
             Internal state handling
         '''
         self.execQueue = []
-        self.state = 'uninitialized'
-        self.interval = 5
-        self.thread = None
 
         '''
             Information store
@@ -64,34 +57,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.request_session.mount('http://', adapter)
 
     '''
-        Thread logic
-    '''
-
-    def run_logic_loop(self):
-        self.interval = 3
-        self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True  # Demonize thread
-        self.thread.start()  # Start the execution
-
-    def run(self):
-        """ Method that should run forever """
-        while True:
-            self.interval = 5
-
-            if self.state == 'running':
-                # self.interval = random.randint(2, 10) / 10.0
-                self.interval = self.settings['interval']
-                try:
-                    self.execute_logic()
-                except Exception as e:
-                    print('error on merchantLogic:\n', e)
-                    traceback.print_exc()
-                    print('safely stop Merchant')
-                    self.stop()
-
-            time.sleep(self.interval)
-
-    '''
         Implement Abstract methods / Interface
     '''
 
@@ -103,33 +68,19 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def init(self):
+        MerchantBaseLogic.init(self)
+
         self.merchant_id = self.register_to_marketplace()
         self.settings.update({'merchant_id': self.merchant_id})
         self.run_logic_loop()
-        self.state = 'initialized'
-
-    def start(self):
-        if self.state == 'uninitialized':
-            self.init()
-
-        if self.state == 'initialized':
-            self.game_init()
-
-        self.state = 'running'
-
-    def stop(self):
-        if self.state == 'running':
-            self.state = 'stopping'
 
     def terminate(self):
-        if self.state == 'uninitialized':
-            return
+        MerchantBaseLogic.terminate(self)
 
         self.unregister_to_marketplace()
         self.products = []
         self.offers = []
         self.merchant_id = None
-        self.state = 'uninitialized'
 
     def sold_offer(self, offer_json):
         offer_id = offer_json['offer_id']
@@ -138,13 +89,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.execQueue.append((self.sold_product, (offer_id, amount, price)))
 
     '''
-        END Interface Implementation
+        Merchant Logic
     '''
 
-    def game_init(self):
+    def setup(self):
         url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchant_id))
         products = {}
-        offers = {}
 
         for i in range(settings['initialProducts']):
             r = self.request_session.get(url)
@@ -153,19 +103,56 @@ class MerchantSampleLogic(MerchantBaseLogic):
             old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
             if old_product:
                 old_product['amount'] += 1
-                old_product['signature'] = new_product['signature']
+                old_product['signature'] = product['signature']
                 offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
                 url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
                 offer['amount'] = old_product['amount']
                 offer['signature'] = old_product['signature']
                 self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
             else:
-                newOffer = self.create_offer(product)
+                new_offer = self.create_offer(product)
                 products[product['uid']] = product
-                newOffer['id'] = self.add_offer_to_marketplace(newOffer)
-                self.offers.append(newOffer)
+                new_offer['id'] = self.add_offer_to_marketplace(new_offer)
+                self.offers.append(new_offer)
 
         self.products = list(products.values())
+
+    def execute_logic(self):
+        # execute queued methods
+        tmp_queue = [e for e in self.execQueue]
+        self.execQueue = []
+        for method, kwargs in tmp_queue:
+            method(*kwargs)
+
+        offers = self.get_offers()
+        for product in self.products:
+            competitor_offers = []
+            for offer in offers:
+                if offer['merchant_id'] != self.merchant_id and offer['uid'] == product['uid']:
+                    competitor_offers.append(offer['price'])
+            if len(competitor_offers) > 0:
+                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
+                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
+
+        return self.settings['interval']
+
+    def register_to_marketplace(self):
+        request_object = {
+            "api_endpoint_url": settings['merchant_url'],
+            "merchant_name": "Sample Merchant",
+            "algorithm_name": "IncreasePrice"
+        }
+        url = urljoin(settings['marketplace_url'], 'merchants')
+
+        r = self.request_session.post(url, json=request_object)
+        print('registerToMarketplace', r.json())
+        return r.json()['merchant_id']
+
+    def unregister_to_marketplace(self):
+        url = urljoin(settings['marketplace_url'], 'merchants/{:d}'.format(self.merchant_id))
+        print('unRegisterToMarketplace')
+
+        self.request_session.delete(url)
 
     def create_offer(self, product):
         return {
@@ -188,24 +175,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         r = self.request_session.post(url, json=offer)
         return r.json()['offer_id']
-
-    def register_to_marketplace(self):
-        request_object = {
-            "api_endpoint_url": settings['merchant_url'],
-            "merchant_name": "Sample Merchant",
-            "algorithm_name": "IncreasePrice"
-        }
-        url = urljoin(settings['marketplace_url'], 'merchants')
-
-        r = self.request_session.post(url, json=request_object)
-        print('registerToMarketplace', r.json())
-        return r.json()['merchant_id']
-
-    def unregister_to_marketplace(self):
-        url = urljoin(settings['marketplace_url'], 'merchants/{:d}'.format(self.merchant_id))
-        print('unRegisterToMarketplace')
-
-        self.request_session.delete(url)
 
     def update_offer(self, new_offer):
         print('update offer:', new_offer)
@@ -238,32 +207,13 @@ class MerchantSampleLogic(MerchantBaseLogic):
         offers = r.json()
         return offers
 
-    def execute_logic(self):
-        # execute queued methods
-        tmp_queue = [e for e in self.execQueue]
-        self.execQueue = []
-        for method, kwargs in tmp_queue:
-            method(*kwargs)
-
-        offers = self.get_offers()
-        for product in self.products:
-            competitor_offers = []
-            for offer in offers:
-                if offer['merchant_id'] != self.merchant_id and offer['uid'] == product['uid']:
-                    competitor_offers.append(offer['price'])
-            if len(competitor_offers) > 0:
-                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
-                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
-
     def sold_product(self, offer_id, amount, price):
-        print('soldProduct')
+        print('soldProduct', price)
         offer = [offer for offer in self.offers if offer['id'] == offer_id]
         if offer:
             offer = offer[0]
-            print('found offer:', offer)
             offer['amount'] -= amount
             product = [product for product in self.products if product['uid'] == offer['uid']][0]
-            print('found product:', product)
 
             product['amount'] -= amount
             if product['amount'] <= 0:

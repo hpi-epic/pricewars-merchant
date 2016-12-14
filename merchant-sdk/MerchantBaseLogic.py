@@ -1,10 +1,44 @@
 from abc import ABCMeta, abstractmethod
 
+import traceback
+import threading
+import time
+
 base_settings = {}
 
 
 class MerchantBaseLogic:
     __metaclass__ = ABCMeta
+
+    def __init__(self):
+        self.interval = 5
+        self.thread = None
+        self.state = 'uninitialized'
+
+    '''
+        Threading Logic
+    '''
+
+    def run_logic_loop(self):
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.daemon = True  # Demonize thread
+        self.thread.start()  # Start the execution
+
+    def run(self):
+        """ Method that should run forever """
+        while True:
+            if self.state == 'running':
+                try:
+                    self.interval = self.execute_logic() or self.interval
+                except Exception as e:
+                    print('error on merchantLogic:\n', e)
+                    traceback.print_exc()
+                    print('safely stop Merchant')
+                    self.stop()
+            else:
+                self.interval = 5
+
+            time.sleep(self.interval)
 
     '''
         Settings and merchant controls for Web-Frontend
@@ -20,20 +54,40 @@ class MerchantBaseLogic:
         base_settings.update(settings)
 
     @abstractmethod
+    def setup(self):
+        pass
+
+    @abstractmethod
+    def execute_logic(self):
+        """
+        Entry point for regular merchant activity
+        The base logic class takes care of the possible states of the merchant,
+        i.e. this method is not called when the merchant is stopping
+        :return: time in seconds (float) to the next wanted execution
+        """
+        return self.interval
+
     def init(self):
-        pass
+        self.state = 'initialized'
 
-    @abstractmethod
     def start(self):
-        pass
+        if self.state == 'uninitialized':
+            self.init()
 
-    @abstractmethod
+        if self.state == 'initialized':
+            self.setup()
+
+        self.state = 'running'
+
     def stop(self):
-        pass
+        if self.state == 'running':
+            self.state = 'stopping'
 
-    @abstractmethod
     def terminate(self):
-        pass
+        if self.state == 'uninitialized':
+            return
+
+        self.state = 'uninitialized'
 
     '''
         Simulation API

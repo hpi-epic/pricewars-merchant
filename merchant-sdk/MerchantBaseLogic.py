@@ -67,6 +67,9 @@ class MerchantBaseLogic:
         """
         return self.interval
 
+    def get_state(self):
+        return self.state
+
     def init(self):
         self.state = 'initialized'
 

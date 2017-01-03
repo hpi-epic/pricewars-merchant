@@ -73,7 +73,19 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def update_settings(self, new_settings):
-        self.settings.update(new_settings)
+        def cast_to_expected_type(key, value):
+            if key in settings:
+                return type(settings[key])(value)
+            else:
+                return value
+
+        new_settings_casted = dict([
+            (key, cast_to_expected_type(key, new_settings[key]))
+            for key
+            in new_settings
+        ])
+
+        self.settings.update(new_settings_casted)
         return self.settings
 
     def init(self):

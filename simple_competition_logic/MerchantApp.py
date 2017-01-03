@@ -24,7 +24,9 @@ settings = {
     'maxPriceMargin': 32,
     'shipping': 5,
     'primeShipping': 1,
-    'debug': True
+    'debug': True,
+    'tick': 100.0,
+    'max_req_per_sec': 10
 }
 
 
@@ -141,7 +143,10 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
-        return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
+        # returns sleep value; higher tick is proportional to higher sleep value
+        return settings['tick']/settings['max_req_per_sec']
+        #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
+
 
     def register_to_marketplace(self):
         request_object = {

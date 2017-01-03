@@ -20,7 +20,9 @@ settings = {
     'maxPriceMargin': 32,
     'shipping': 5,
     'primeShipping': 1,
-    'debug': False
+    'debug': False,
+    'tick': 100.0,
+    'max_req_per_sec': 10
 }
 
 def get_from_list_by_key(dict_list, key, value):

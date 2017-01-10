@@ -11,7 +11,10 @@ from MerchantBaseLogic import MerchantBaseLogic
 from MerchantServer import MerchantServer
 import random
 
-merchant_token = environ['TOKEN']
+'''
+    Template for Ruby deployment to insert defined tokens
+'''
+merchant_token = {{API_TOKEN}}
 
 settings = {
     'merchant_token': merchant_token,

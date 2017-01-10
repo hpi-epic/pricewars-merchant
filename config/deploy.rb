@@ -53,6 +53,7 @@ namespace :deploy do
       within release_path do
       	execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install -r requirements.txt"
         execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install mod_wsgi"
+        execute "cd #{release_path}/simple_competition_logic/ && sed 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/g' "
       end
     end
   end

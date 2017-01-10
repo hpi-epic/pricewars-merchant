@@ -272,7 +272,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     # returns product
     def buy_random_product(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:d}'.format(self.merchant_token))
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:s}'.format(self.merchant_token))
         r = self.request_session.get(url)
         product = r.json()
         print('bought new product', product)

@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 import traceback
 import threading
 import time
+import hashlib
+import base64
 
 base_settings = {}
 
@@ -14,6 +16,9 @@ class MerchantBaseLogic:
         self.interval = 5
         self.thread = None
         self.state = 'initialized'
+
+    def calculate_id(token):
+        return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest())
 
     '''
         Threading Logic

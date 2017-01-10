@@ -1,8 +1,9 @@
+import os
 import argparse
-from posixpath import join as urljoin
 import requests
 import requests.adapters
 from random import randint
+from posixpath import join as urljoin
 
 import sys
 sys.path.append('../merchant-sdk')
@@ -11,13 +12,11 @@ from MerchantBaseLogic import MerchantBaseLogic
 from MerchantServer import MerchantServer
 import random
 
-'''
-    Add merchant token
-'''
+merchant_token = os.environ['TOKEN']
 
 settings = {
-    'merchant_id': 'Gd20RhD/ZjQmooNNcu9lCG/EDl0ehGMl5tc7EwNNP90=',
-    'merchant_token': 'i9yUxCLcDhkQJYwsKaNiDGLNPVUN45InEHICUdogLa7e84XSfuBrAWFZ1iw6nFs2',
+    'merchant_token': merchant_token,
+    'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
@@ -182,8 +181,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def create_offer(self, product):
         return {
             "product_id": product['product_id'],
-            # todo: remove id
-            "merchant_id": self.merchant_id,
             "signature": product['signature'],
             "uid": product['uid'],
             "quality": product['quality'],

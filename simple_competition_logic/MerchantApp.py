@@ -14,7 +14,7 @@ import random
 '''
     Template for Ruby deployment to insert defined tokens
 '''
-merchant_token = {{API_TOKEN}}
+merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_token': merchant_token,

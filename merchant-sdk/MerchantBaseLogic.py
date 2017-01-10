@@ -13,7 +13,7 @@ class MerchantBaseLogic:
     def __init__(self):
         self.interval = 5
         self.thread = None
-        self.state = 'uninitialized'
+        self.state = 'initialized'
 
     '''
         Threading Logic
@@ -55,6 +55,11 @@ class MerchantBaseLogic:
 
     @abstractmethod
     def setup(self):
+        """
+        Use this method to:
+        * fetch all your existing offers form the marketplace
+        * buy products and offer them in the market
+        """
         pass
 
     @abstractmethod
@@ -70,27 +75,14 @@ class MerchantBaseLogic:
     def get_state(self):
         return self.state
 
-    def init(self):
-        self.state = 'initialized'
-
     def start(self):
-        if self.state == 'uninitialized':
-            self.init()
-
         if self.state == 'initialized':
             self.setup()
-
         self.state = 'running'
 
     def stop(self):
         if self.state == 'running':
             self.state = 'stopping'
-
-    def terminate(self):
-        if self.state == 'uninitialized':
-            return
-
-        self.state = 'uninitialized'
 
     '''
         Simulation API

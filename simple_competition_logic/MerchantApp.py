@@ -11,8 +11,13 @@ from MerchantBaseLogic import MerchantBaseLogic
 from MerchantServer import MerchantServer
 import random
 
+'''
+    Add merchant token
+'''
+
 settings = {
-    'merchant_id': 0,
+    'merchant_id': 'Gd20RhD/ZjQmooNNcu9lCG/EDl0ehGMl5tc7EwNNP90=',
+    'merchant_token': 'i9yUxCLcDhkQJYwsKaNiDGLNPVUN45InEHICUdogLa7e84XSfuBrAWFZ1iw6nFs2',
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
@@ -53,7 +58,13 @@ class MerchantSampleLogic(MerchantBaseLogic):
         '''
         self.products = []
         self.offers = []
-        self.merchant_id = None
+
+        '''
+            Predefined API token
+        '''
+        self.merchant_id = settings['merchant_id']
+        self.merchant_token = settings['merchant_token']
+
 
         '''
             Setup connection pools
@@ -64,6 +75,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.request_session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections=300, pool_maxsize=300)
         self.request_session.mount('http://', adapter)
+        self.request_session.headers.update({'Authorization': 'Token {:s}'.format(self.merchant_token)})
+
+        '''
+            Start Logic Loop
+        '''
+        self.run_logic_loop()
 
     '''
         Implement Abstract methods / Interface
@@ -87,21 +104,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.settings.update(new_settings_casted)
         return self.settings
 
-    def init(self):
-        MerchantBaseLogic.init(self)
-
-        self.merchant_id = self.register_to_marketplace()
-        self.settings.update({'merchant_id': self.merchant_id})
-        self.run_logic_loop()
-
-    def terminate(self):
-        MerchantBaseLogic.terminate(self)
-
-        self.unregister_to_marketplace()
-        self.products = []
-        self.offers = []
-        self.merchant_id = None
-
     def sold_offer(self, offer_json):
         offer_id = offer_json['offer_id']
         amount = offer_json['amount']
@@ -113,7 +115,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
     '''
 
     def setup(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchant_id))
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:s}'.format(self.merchant_token))
         products = {}
 
         for i in range(settings['initialProducts']):
@@ -159,27 +161,28 @@ class MerchantSampleLogic(MerchantBaseLogic):
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
 
-    def register_to_marketplace(self):
-        request_object = {
-            "api_endpoint_url": settings['merchant_url'],
-            "merchant_name": "Sample Merchant",
-            "algorithm_name": "IncreasePrice"
-        }
-        url = urljoin(settings['marketplace_url'], 'merchants')
+    # def register_to_marketplace(self):
+    #     request_object = {
+    #         "api_endpoint_url": settings['merchant_url'],
+    #         "merchant_name": "Sample Merchant",
+    #         "algorithm_name": "IncreasePrice"
+    #     }
+    #     url = urljoin(settings['marketplace_url'], 'merchants')
 
-        r = self.request_session.post(url, json=request_object)
-        print('registerToMarketplace', r.json())
-        return r.json()['merchant_id']
+    #     r = self.request_session.post(url, json=request_object)
+    #     print('registerToMarketplace', r.json())
+    #     return r.json()['merchant_id']
 
-    def unregister_to_marketplace(self):
-        url = urljoin(settings['marketplace_url'], 'merchants/{:d}'.format(self.merchant_id))
-        print('unRegisterToMarketplace')
+    # def unregister_to_marketplace(self):
+    #     url = urljoin(settings['marketplace_url'], 'merchants/{:d}'.format(self.merchant_token))
+    #     print('unRegisterToMarketplace')
 
-        self.request_session.delete(url)
+    #     self.request_session.delete(url)
 
     def create_offer(self, product):
         return {
             "product_id": product['product_id'],
+            # todo: remove id
             "merchant_id": self.merchant_id,
             "signature": product['signature'],
             "uid": product['uid'],
@@ -267,7 +270,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     # returns product
     def buy_random_product(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_id={:d}'.format(self.merchant_id))
+        url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:d}'.format(self.merchant_token))
         r = self.request_session.get(url)
         product = r.json()
         print('bought new product', product)

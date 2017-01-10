@@ -84,14 +84,10 @@ class MerchantServer:
         endpoint_settings = {k: request.json[k] for k in request.json if k in endpoint_setting_keys}
         self.update_all_settings(endpoint_settings)
 
-        if next_state == 'init':
-            self.merchant_logic.init()
-        elif next_state == 'start':
+        if next_state == 'start':
             self.merchant_logic.start()
         elif next_state == 'stop':
             self.merchant_logic.stop()
-        elif next_state == 'kill':
-            self.merchant_logic.terminate()
 
         return json_response({})
 

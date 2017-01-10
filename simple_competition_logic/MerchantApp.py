@@ -15,12 +15,12 @@ import random
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
+#merchant_token = 'asagafg'
 
 settings = {
-    'merchant_token': merchant_token,
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
-    'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de',
+    'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
     'intervalMin': 1.0,
@@ -64,7 +64,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             Predefined API token
         '''
         self.merchant_id = settings['merchant_id']
-        self.merchant_token = settings['merchant_token']
+        self.merchant_token = merchant_token
 
 
         '''

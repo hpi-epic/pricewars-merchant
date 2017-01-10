@@ -69,7 +69,7 @@ class MerchantServer:
     def put_settings(self):
         new_settings = request.json
         self.update_all_settings(new_settings)
-        return self.get_all_settings()
+        return json_response(self.get_all_settings())
 
     def set_state(self):
         next_state = request.json['nextState']

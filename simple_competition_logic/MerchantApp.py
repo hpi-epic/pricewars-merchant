@@ -1,4 +1,3 @@
-import os
 import argparse
 import requests
 import requests.adapters
@@ -12,7 +11,7 @@ from MerchantBaseLogic import MerchantBaseLogic
 from MerchantServer import MerchantServer
 import random
 
-merchant_token = os.environ['TOKEN']
+merchant_token = environ['TOKEN']
 
 settings = {
     'merchant_token': merchant_token,

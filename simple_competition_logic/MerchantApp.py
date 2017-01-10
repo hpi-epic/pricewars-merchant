@@ -25,7 +25,7 @@ settings = {
     'priceDecrease': 1,
     'intervalMin': 1.0,
     'intervalMax': 1.0,
-    'initialProducts': 25,
+    'initialProducts': 3,
     'minPriceMargin': 16,
     'maxPriceMargin': 32,
     'shipping': 5,
@@ -119,24 +119,27 @@ class MerchantSampleLogic(MerchantBaseLogic):
         url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:s}'.format(self.merchant_token))
         products = {}
 
-        for i in range(settings['initialProducts']):
-            r = self.request_session.get(url)
-            product = r.json()
+        try:
+            for i in range(settings['initialProducts']):
+                r = self.request_session.get(url)
+                product = r.json()
 
-            old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
-            if old_product:
-                old_product['amount'] += 1
-                old_product['signature'] = product['signature']
-                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
-                url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
-                offer['amount'] = old_product['amount']
-                offer['signature'] = old_product['signature']
-                self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
-            else:
-                new_offer = self.create_offer(product)
-                products[product['uid']] = product
-                new_offer['id'] = self.add_offer_to_marketplace(new_offer)
-                self.offers.append(new_offer)
+                old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
+                if old_product:
+                    old_product['amount'] += 1
+                    old_product['signature'] = product['signature']
+                    offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
+                    url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
+                    offer['amount'] = old_product['amount']
+                    offer['signature'] = old_product['signature']
+                    self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
+                else:
+                    new_offer = self.create_offer(product)
+                    products[product['uid']] = product
+                    new_offer['id'] = self.add_offer_to_marketplace(new_offer)
+                    self.offers.append(new_offer)
+        except Exception as e:
+            print('error on setup:', e)
 
         self.products = list(products.values())
 

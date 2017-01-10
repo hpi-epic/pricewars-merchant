@@ -78,6 +78,9 @@ class MerchantServer:
         '''
             Execution settings can contain setting change
             i.e. on 'init', merchant_url and marketplace_url is given
+
+            EDIT: maybe remove this settings update, since 'init' is not
+            supported anymore
         '''
 
         endpoint_setting_keys = ['merchant_url', 'marketplace_url']

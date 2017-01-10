@@ -18,7 +18,7 @@ class MerchantBaseLogic:
         self.state = 'initialized'
 
     def calculate_id(token):
-        return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest())
+        return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest()).decode('utf-8')
 
     '''
         Threading Logic

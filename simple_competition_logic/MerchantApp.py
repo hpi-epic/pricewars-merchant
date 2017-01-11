@@ -15,7 +15,7 @@ import random
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'asagafg'
+#merchant_token = '28ycOMCcBxoDmbIQaOoaMB1tPiVKTBIVIH8gdKJnI824jJVKhJu4VuxueTF8eXcw'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),

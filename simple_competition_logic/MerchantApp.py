@@ -1,21 +1,16 @@
 import argparse
-import requests
-import requests.adapters
-from random import randint
-from posixpath import join as urljoin
-
 import sys
-sys.path.append('../merchant-sdk')
 
-from MerchantBaseLogic import MerchantBaseLogic
-from MerchantServer import MerchantServer
-import random
+sys.path.append('../')
+from merchant_sdk import MerchantBaseLogic, MerchantServer
+from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
+from merchant_sdk.models import Offer
 
 '''
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = '28ycOMCcBxoDmbIQaOoaMB1tPiVKTBIVIH8gdKJnI824jJVKhJu4VuxueTF8eXcw'
+merchant_token = '28ycOMCcBxoDmbIQaOoaMB1tPiVKTBIVIH8gdKJnI824jJVKhJu4VuxueTF8eXcw'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -57,8 +52,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         '''
             Information store
         '''
-        self.products = []
-        self.offers = []
+        self.products = {}
+        self.offers = {}
 
         '''
             Predefined API token
@@ -66,22 +61,26 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.merchant_id = settings['merchant_id']
         self.merchant_token = merchant_token
 
-
         '''
-            Setup connection pools
-
-            otherwise, requests is going to open a new connection for each request,
-            leaving resources on the destination allocated.
+            Setup API
         '''
-        self.request_session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(pool_connections=300, pool_maxsize=300)
-        self.request_session.mount('http://', adapter)
-        self.request_session.headers.update({'Authorization': 'Token {:s}'.format(self.merchant_token)})
+        PricewarsRequester.add_api_token(self.merchant_token)
+        self.marketplace_api = MarketplaceApi(host=self.settings['marketplace_url'])
+        self.producer_api = ProducerApi(host=self.settings['producerEndpoint'])
 
         '''
             Start Logic Loop
         '''
         self.run_logic_loop()
+
+    def update_api_endpoints(self):
+        """
+        Updated settings may contain new endpoints, so they need to be set in the api client as well.
+        However, changing the endpoint (after simulation start) may lead to an inconsistent state
+        :return: None
+        """
+        self.marketplace_api.host = self.settings['marketplace_url']
+        self.producer_api.host = self.settings['producerEndpoint']
 
     '''
         Implement Abstract methods / Interface
@@ -103,6 +102,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         ])
 
         self.settings.update(new_settings_casted)
+        self.update_api_endpoints()
         return self.settings
 
     def sold_offer(self, offer_json):
@@ -116,32 +116,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
     '''
 
     def setup(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:s}'.format(self.merchant_token))
-        products = {}
-
         try:
             for i in range(settings['initialProducts']):
-                r = self.request_session.get(url)
-                product = r.json()
-
-                old_product = get_from_list_by_key(self.products, 'uid', product['uid'])
-                if old_product:
-                    old_product['amount'] += 1
-                    old_product['signature'] = product['signature']
-                    offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
-                    url2 = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
-                    offer['amount'] = old_product['amount']
-                    offer['signature'] = old_product['signature']
-                    self.request_session.patch(url2, json={'amount': 1, 'signature': old_product['signature']})
-                else:
-                    new_offer = self.create_offer(product)
-                    products[product['uid']] = product
-                    new_offer['id'] = self.add_offer_to_marketplace(new_offer)
-                    self.offers.append(new_offer)
+                self.buy_product_and_update_offer()
         except Exception as e:
             print('error on setup:', e)
-
-        self.products = list(products.values())
 
     def execute_logic(self):
         # execute queued methods
@@ -150,133 +129,75 @@ class MerchantSampleLogic(MerchantBaseLogic):
         for method, kwargs in tmp_queue:
             method(*kwargs)
 
-        offers = self.get_offers()
-        for product in self.products:
+        offers = self.marketplace_api.get_offers()
+        for product in self.products.values():
             competitor_offers = []
             for offer in offers:
-                if offer['merchant_id'] != self.merchant_id and offer['uid'] == product['uid']:
-                    competitor_offers.append(offer['price'])
+                if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
+                    competitor_offers.append(offer.price)
             if len(competitor_offers) > 0:
-                offer = get_from_list_by_key(self.offers, 'uid', product['uid'])
+                offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
         # returns sleep value; higher tick is proportional to higher sleep value
         return settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
-
-    # def register_to_marketplace(self):
-    #     request_object = {
-    #         "api_endpoint_url": settings['merchant_url'],
-    #         "merchant_name": "Sample Merchant",
-    #         "algorithm_name": "IncreasePrice"
-    #     }
-    #     url = urljoin(settings['marketplace_url'], 'merchants')
-
-    #     r = self.request_session.post(url, json=request_object)
-    #     print('registerToMarketplace', r.json())
-    #     return r.json()['merchant_id']
-
-    # def unregister_to_marketplace(self):
-    #     url = urljoin(settings['marketplace_url'], 'merchants/{:d}'.format(self.merchant_token))
-    #     print('unRegisterToMarketplace')
-
-    #     self.request_session.delete(url)
-
-    def create_offer(self, product):
-        return {
-            "product_id": product['product_id'],
-            "signature": product['signature'],
-            "uid": product['uid'],
-            "quality": product['quality'],
-            "amount": product['amount'],
-            "price": product['price'] + settings['maxPriceMargin'],
-            "shipping_time": {
-                "standard": settings['shipping'],
-                "prime": settings['primeShipping']
-            },
-            "prime": True
-        }
-
-    def add_offer_to_marketplace(self, offer):
-        url = urljoin(settings['marketplace_url'], 'offers')
-
-        r = self.request_session.post(url, json=offer)
-        return r.json()['offer_id']
-
-    def update_offer(self, new_offer):
-        print('update offer:', new_offer)
-        url = urljoin(settings['marketplace_url'], 'offers/{:d}'.format(new_offer['id']))
-
-        try:
-            self.request_session.put(url, json=new_offer)
-        except Exception as e:
-            print('failed to update offer', e)
-
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
         if not offer or not product:
             return
-
-        min_price = product['price'] + settings['minPriceMargin']
-        max_price = product['price'] + settings['maxPriceMargin']
-
+        min_price = product.price + settings['minPriceMargin']
+        max_price = product.price + settings['maxPriceMargin']
         price = lowest_competitor_price - settings['priceDecrease']
         price = min(price, max_price)
         if price < min_price:
             price = max_price
-
-        offer['price'] = price
-        self.update_offer(offer)
-
-    def get_offers(self, ):
-        url = urljoin(settings['marketplace_url'], 'offers')
-
-        r = self.request_session.get(url)
-        offers = r.json()
-        return offers
+        offer.price = price
+        self.marketplace_api.update_offer(offer)
 
     def sold_product(self, offer_id, amount, price):
         print('soldProduct', price)
-        offer = [offer for offer in self.offers if offer['id'] == offer_id]
-        if offer:
-            offer = offer[0]
-            offer['amount'] -= amount
-            product = [product for product in self.products if product['uid'] == offer['uid']][0]
-
-            product['amount'] -= amount
-            if product['amount'] <= 0:
-                print('product {:d} is out of stock!'.format(product['uid']))
-
-            # sample logic: TODO: improve
+        if offer_id in self.offers:
+            offer = self.offers[offer_id]
+            offer.amount -= amount
+            product = self.products[offer.uid]
+            product.amount -= amount
+            if product.amount <= 0:
+                print('product {:d} is out of stock!'.format(product.uid))
             self.buy_product_and_update_offer()
+
+    def add_new_product_to_offers(self, new_product):
+        new_offer = Offer.from_product(new_product)
+        new_offer.price += settings['maxPriceMargin']
+        new_offer.shipping_time = {
+            'standard': settings['shipping'],
+            'prime': settings['primeShipping']
+        }
+        new_offer.prime = True
+        self.products[new_product.uid] = new_product
+        new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
+        self.offers[new_product.uid] = new_offer
+
+    def restock_existing_product(self, new_product):
+        print('restock product', new_product)
+        product = self.products[new_product.uid]
+        product.amount += new_product.amount
+        product.signature = new_product.signature
+
+        offer = self.offers[product.uid]
+        print('in this offer:', offer)
+        offer.amount = product.amount
+        offer.signature = product.signature
+        self.marketplace_api.restock(offer.id, new_product.amount, offer.signature)
 
     def buy_product_and_update_offer(self):
         print('buy Product and update')
-        new_product = self.buy_random_product()
+        new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
 
-        old_product = get_from_list_by_key(self.products, 'uid', new_product['uid'])
-        if old_product:
-            old_product['amount'] += 1
-            old_product['signature'] = new_product['signature']
-            offer = get_from_list_by_key(self.offers, 'uid', new_product['uid'])
-            print('in this offer:', offer)
-            url = urljoin(settings['marketplace_url'], 'offers/{:d}/restock'.format(offer['id']))
-            offer['amount'] = old_product['amount']
-            offer['signature'] = old_product['signature']
-            self.request_session.patch(url, json={'amount': 1, 'signature': offer['signature']})
+        if new_product.uid in self.products:
+            self.restock_existing_product(new_product)
         else:
-            self.products.append(new_product)
-            new_offer = self.create_offer(new_product)
-            new_offer['id'] = self.add_offer_to_marketplace(new_offer)
-            self.offers.append(new_offer)
-
-    # returns product
-    def buy_random_product(self):
-        url = urljoin(settings['producerEndpoint'], 'buy?merchant_token={:s}'.format(self.merchant_token))
-        r = self.request_session.get(url)
-        product = r.json()
-        print('bought new product', product)
-        return product
+            self.add_new_product_to_offers(new_product)
 
 
 merchant_logic = MerchantSampleLogic()

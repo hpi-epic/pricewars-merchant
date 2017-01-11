@@ -4,7 +4,7 @@ server "vpn.framsteg.de", user: "deployer", roles: %w(www)
 # uncomment in case of travis, capistrano will have its own
 set :ssh_options, keys: ["config/deploy_id_rsa"] if File.exist?("config/deploy_id_rsa")
 set :ssh_options, port: 7047
-set :api_token, "k5p3CkdUBDg4wORWbdFHejGATB9onFHYK7cWqG12Th7Q6XvhCCzquF1PQAEEPVmj"
+set :api_token, "bTEXsl4wJJomq5h1BaDEWCstSPbcGmIqFWO8IS5bltOcy6eBgrOD3H7Vgh8wUQnk"
 set :deploy_to, "/var/www/pricewars-merchant2"
 
 # Configuration

@@ -187,7 +187,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         print('in this offer:', offer)
         offer.amount = product.amount
         offer.signature = product.signature
-        self.marketplace_api.restock(offer.id, new_product.amount, offer.signature)
+        self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
 
     def buy_product_and_update_offer(self):
         print('buy Product and update')

@@ -135,12 +135,15 @@ class MerchantSampleLogic(MerchantBaseLogic):
             for offer in offers:
                 if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
                     competitor_offers.append(offer.price)
+                else:
+                    print('c\'est ne pas mon produit!')
             if len(competitor_offers) > 0:
+                print('there are no competitor_offers')
                 offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
         # returns sleep value; higher tick is proportional to higher sleep value
-        return settings['tick']/settings['max_req_per_sec']
+        return 0.1 # settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):

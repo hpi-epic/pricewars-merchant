@@ -105,12 +105,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.update_api_endpoints()
         return self.settings
 
-    def sold_offer(self, offer_json):
-        print('sold_offer')
-        offer_id = offer_json['offer_id']
-        amount = offer_json['amount']
-        price = offer_json['price']
-        self.execQueue.append((self.sold_product, (offer_id, amount, price)))
+    def sold_offer(self, offer):
+        self.execQueue.append((self.sold_product, (offer)))
 
     '''
         Merchant Logic
@@ -157,11 +153,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         offer.price = price
         self.marketplace_api.update_offer(offer)
 
-    def sold_product(self, offer_id, amount, price):
-        print('soldProduct', price, 'id:', offer_id)
-        if offer_id in self.offers:
+    def sold_product(self, offer):
+        print('soldProduct, offer:', offer)
+        if offer.uid in self.offers:
             print('found in offers')
-            offer = self.offers[offer_id]
+            offer = self.offers[offer.uid]
             offer.amount -= amount
             product = self.products[offer.uid]
             product.amount -= amount

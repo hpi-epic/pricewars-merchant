@@ -5,6 +5,7 @@ from flask import Flask, request, Response
 from flask_cors import CORS
 
 from .MerchantBaseLogic import MerchantBaseLogic
+from .models import Offer
 
 
 def json_response(obj):
@@ -95,10 +96,10 @@ class MerchantServer:
         return json_response({})
 
     def item_sold(self):
-        print('item_sold')
         try:
             sent_json = request.get_json(force=True)
-            self.merchant_logic.sold_offer(sent_json)
+            offer = Offer.from_dict(sent_json)
+            self.merchant_logic.sold_offer(offer)
         except Exception as e:
             self.log(e)
 

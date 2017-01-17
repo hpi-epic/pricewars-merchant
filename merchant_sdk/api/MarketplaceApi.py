@@ -1,4 +1,4 @@
-from.PricewarsBasiApi import PricewarsBaseApi
+from.PricewarsBaseApi import PricewarsBaseApi
 from ..models import Offer, MerchantRegisterResponse
 
 

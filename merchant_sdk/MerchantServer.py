@@ -95,6 +95,7 @@ class MerchantServer:
         return json_response({})
 
     def item_sold(self):
+        print('item_sold')
         try:
             sent_json = request.get_json(force=True)
             self.merchant_logic.sold_offer(sent_json)

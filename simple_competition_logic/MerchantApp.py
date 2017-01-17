@@ -106,6 +106,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer_json):
+        print('sold_offer')
         offer_id = offer_json['offer_id']
         amount = offer_json['amount']
         price = offer_json['price']
@@ -126,6 +127,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         # execute queued methods
         tmp_queue = [e for e in self.execQueue]
         self.execQueue = []
+        print('queue', tmp_queue)
         for method, kwargs in tmp_queue:
             method(*kwargs)
 
@@ -135,15 +137,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
             for offer in offers:
                 if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
                     competitor_offers.append(offer.price)
-                else:
-                    print('c\'est ne pas mon produit!')
             if len(competitor_offers) > 0:
-                print('there are no competitor_offers')
                 offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
         # returns sleep value; higher tick is proportional to higher sleep value
-        return 0.1 # settings['tick']/settings['max_req_per_sec']
+        return settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
@@ -159,8 +158,9 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.marketplace_api.update_offer(offer)
 
     def sold_product(self, offer_id, amount, price):
-        print('soldProduct', price)
+        print('soldProduct', price, 'id:', offer_id)
         if offer_id in self.offers:
+            print('found in offers')
             offer = self.offers[offer_id]
             offer.amount -= amount
             product = self.products[offer.uid]

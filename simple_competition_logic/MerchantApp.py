@@ -106,7 +106,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
-        self.execQueue.append((self.sold_product, (offer)))
+        self.execQueue.append((self.sold_product, [offer]))
 
     '''
         Merchant Logic
@@ -124,8 +124,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         tmp_queue = [e for e in self.execQueue]
         self.execQueue = []
         print('queue', tmp_queue)
-        for method, kwargs in tmp_queue:
-            method(*kwargs)
+        for method, args in tmp_queue:
+            method(*args)
 
         offers = self.marketplace_api.get_offers()
         for product in self.products.values():

@@ -153,14 +153,14 @@ class MerchantSampleLogic(MerchantBaseLogic):
         offer.price = price
         self.marketplace_api.update_offer(offer)
 
-    def sold_product(self, offer):
-        print('soldProduct, offer:', offer)
-        if offer.uid in self.offers:
+    def sold_product(self, sold_offer):
+        print('soldProduct, offer:', sold_offer)
+        if sold_offer.uid in self.offers:
             print('found in offers')
-            offer = self.offers[offer.uid]
-            offer.amount -= amount
-            product = self.products[offer.uid]
-            product.amount -= amount
+            offer = self.offers[sold_offer.uid]
+            offer.amount -= sold_offer.amount_sold
+            product = self.products[sold_offer.uid]
+            product.amount -= sold_offer.amount_sold
             if product.amount <= 0:
                 print('product {:d} is out of stock!'.format(product.uid))
             self.buy_product_and_update_offer()

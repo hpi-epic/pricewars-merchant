@@ -6,7 +6,7 @@ from flask_cors import CORS
 
 from .MerchantBaseLogic import MerchantBaseLogic
 from .models import SoldOffer
-
+from .strategies import Strategies
 
 def json_response(obj):
     js = json.dumps(obj)
@@ -15,6 +15,9 @@ def json_response(obj):
 
 
 class MerchantServer:
+    #offers = '[{"quality":1,"price":47.00,"amount":1000,"offer_id":93,"product_id":2,"uid":21,"merchant_id":"sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms=","shipping_time":{"standard":5,"prime":1},"prime":true},{"quality":1,"price":46.00,"amount":1000,"offer_id":93,"product_id":2,"uid":21,"merchant_id":"sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms=","shipping_time":{"standard":5,"prime":1},"prime":true}]'
+    #print(Strategies.be_cheapest(json.loads(offers), 21, 0.01, 4))
+
     def __init__(self, merchant_logic: Type[MerchantBaseLogic]):
         self.merchant_logic = merchant_logic
         self.server_settings = {

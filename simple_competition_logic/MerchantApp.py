@@ -128,7 +128,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             method(*args)
 
         offers = self.marketplace_api.get_offers()
-        
+
         missing_offers = self.settings[initialProducts] - len(offers)
         for missing_offer in range(missing_offers):
             self.buy_product_and_update_offer()
@@ -155,6 +155,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         price = min(price, max_price)
         if price < min_price:
             price = max_price
+        #offers = '[{"quality":1,"price":47.00,"amount":1000,"offer_id":93,"product_id":2,"uid":21,"merchant_id":"sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms=","shipping_time":{"standard":5,"prime":1},"prime":true},{"quality":1,"price":46.00,"amount":1000,"offer_id":93,"product_id":2,"uid":21,"merchant_id":"sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms=","shipping_time":{"standard":5,"prime":1},"prime":true}]'
+        #print(Strategies.be_cheapest(json.loads(offers), 21, 0.01, 4))
         offer.price = price
         self.marketplace_api.update_offer(offer)
 

@@ -10,7 +10,7 @@ from merchant_sdk.models import Offer
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = '28ycOMCcBxoDmbIQaOoaMB1tPiVKTBIVIH8gdKJnI824jJVKhJu4VuxueTF8eXcw'
+#merchant_token = 't3LvIwV9wN3pWMBdvysjtoR3zWEV1JLtMgpedLnaiqQFEbs9alsUaLXarl6s5RmQ'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -27,7 +27,9 @@ settings = {
     'primeShipping': 1,
     'debug': True,
     'tick': 100.0,
-    'max_req_per_sec': 10
+    'max_req_per_sec': 10,
+    'pricing_strategy': 'be_cheapest',
+    'underprice': 0.01
 }
 
 
@@ -146,6 +148,13 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
+    def adjust_prices_by_strategy(self, offer=None, product=None, market_situation):
+        if not offer or not product:
+            return
+        # calling pricing strategy dynamic based on settings
+        offer.price = getattr(Strategies, settings['pricing_strategy'])(offers, product.uid, settings['underprice'], product.price)
+        self.marketplace_api.update_offer(offer)
+
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
         if not offer or not product:
             return
@@ -155,8 +164,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
         price = min(price, max_price)
         if price < min_price:
             price = max_price
-        #offers = '[{"quality":1,"price":47.00,"amount":1000,"offer_id":93,"product_id":2,"uid":21,"merchant_id":"sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms=","shipping_time":{"standard":5,"prime":1},"prime":true},{"quality":1,"price":46.00,"amount":1000,"offer_id":93,"product_id":2,"uid":21,"merchant_id":"sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms=","shipping_time":{"standard":5,"prime":1},"prime":true}]'
-        #print(Strategies.be_cheapest(json.loads(offers), 21, 0.01, 4))
         offer.price = price
         self.marketplace_api.update_offer(offer)
 

@@ -5,8 +5,9 @@ from .PricewarsRequester import request_session
 
 class PricewarsBaseApi:
 
-    def __init__(self, host=''):
+    def __init__(self, host='', debug=True):
         self.host = host
+        self.debug = debug
 
     def request(self, method, resource, *args, **kwargs):
         """
@@ -31,8 +32,10 @@ class PricewarsBaseApi:
         }[method.lower()]
         try:
             response = func(url, *args, **kwargs)
-            print('response', 'status({:d})'.format(response.status_code), response.text)
+            if self.debug:
+                print('response', 'status({:d})'.format(response.status_code), response.text)
             return response
         except Exception as e:
-            print('api request failed', e)
+            if self.debug:
+                print('api request failed', e)
             return None

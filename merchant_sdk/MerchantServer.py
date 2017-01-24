@@ -6,7 +6,7 @@ from flask_cors import CORS
 
 from .MerchantBaseLogic import MerchantBaseLogic
 from .models import SoldOffer
-from .strategies import Strategies
+
 
 def json_response(obj):
     js = json.dumps(obj)

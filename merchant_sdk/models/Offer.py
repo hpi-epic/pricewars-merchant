@@ -4,7 +4,7 @@ from .PricewarsObject import PricewarsObject
 class Offer(PricewarsObject):
 
     def __init__(self, amount=1, merchant_id='', offer_id=-1, price=0.0, prime=False, product_id=-1,
-                 quality=0, shipping_time={}, signature='', uid=-1):
+                 quality=0, shipping_time={'standard': 3}, signature='', uid=-1):
 
         self.amount = amount
         self.merchant_id = merchant_id

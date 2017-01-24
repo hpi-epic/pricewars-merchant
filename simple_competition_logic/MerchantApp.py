@@ -5,7 +5,6 @@ sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
-import merchant_sdk.strategies
 
 '''
     Template for Ruby deployment to insert defined tokens
@@ -32,7 +31,6 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'debug': True,
-    'tick': 100.0,
     'max_req_per_sec': 10,
     'pricing_strategy': 'be_cheapest',
     'underprice': 0.01,
@@ -154,16 +152,16 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
         # returns sleep value; higher tick is proportional to higher sleep value
-        return settings['tick']/settings['max_req_per_sec']
+        return settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
-    def adjust_prices_by_strategy(self, offer, product, offers):
-        if not offer or not product:
-            return
-        # calling pricing strategy dynamic based on settings
-        strategy = getattr(merchant_sdk.strategies, settings['pricing_strategy'])
-        offer.price = strategy(offers, product.uid, settings, product.price)
-        self.marketplace_api.update_offer(offer)
+    # def adjust_prices_by_strategy(self, offer, product, offers):
+    #     if not offer or not product:
+    #         return
+    #     # calling pricing strategy dynamic based on settings
+    #     strategy = getattr(merchant_sdk.strategies, settings['pricing_strategy'])
+    #     offer.price = strategy(offers, product.uid, settings, product.price)
+    #     self.marketplace_api.update_offer(offer)
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
         if not offer or not product:

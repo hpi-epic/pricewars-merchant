@@ -137,7 +137,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         offers = self.marketplace_api.get_offers()
 
-        missing_offers = self.settings[initialProducts] - len(offers)
+        missing_offers = self.settings["initialProducts"] - len(offers)
         for missing_offer in range(missing_offers):
             self.buy_product_and_update_offer()
 

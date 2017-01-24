@@ -12,6 +12,8 @@ from merchant_sdk.models import Offer
 merchant_token = "{{API_TOKEN}}"
 #merchant_token = 't3LvIwV9wN3pWMBdvysjtoR3zWEV1JLtMgpedLnaiqQFEbs9alsUaLXarl6s5RmQ'
 
+# TODO: Make a union with base_settings to separate some settings
+
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
@@ -188,6 +190,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def add_new_product_to_offers(self, new_product):
         new_offer = Offer.from_product(new_product)
         new_offer.price += settings['maxPriceMargin']
+        # Model?
         new_offer.shipping_time = {
             'standard': settings['shipping'],
             'prime': settings['primeShipping']
@@ -211,6 +214,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     def buy_product_and_update_offer(self):
         print('buy Product and update')
+        # TODO: Extract token
         new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
 
         if new_product.uid in self.products:

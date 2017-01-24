@@ -58,7 +58,6 @@ class MerchantBaseLogic:
         global base_settings
         base_settings.update(settings)
 
-    @abstractmethod
     def setup(self):
         """
         Use this method to:

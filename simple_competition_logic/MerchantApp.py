@@ -5,6 +5,7 @@ sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
+import merchant_sdk.strategies
 
 '''
     Template for Ruby deployment to insert defined tokens
@@ -147,7 +148,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
                     competitor_offers.append(offer.price)
             offer = self.offers[product.uid]
-            self.adjust_prices_by_strategy(offer=offer, product=product, competitor_offers):
+            self.adjust_prices_by_strategy(offer, product, competitor_offers)
 
         # returns sleep value; higher tick is proportional to higher sleep value
         return settings['tick']/settings['max_req_per_sec']
@@ -157,7 +158,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         if not offer or not product:
             return
         # calling pricing strategy dynamic based on settings
-        offer.price = getattr(Strategies, settings['pricing_strategy'])(offers, product.uid, settings, product.price)
+        strategy = getattr(merchant_sdk.strategies, settings['pricing_strategy'])
+        offer.price = strategy(offers, product.uid, settings, product.price)
         self.marketplace_api.update_offer(offer)
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):

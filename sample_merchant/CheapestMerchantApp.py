@@ -20,11 +20,11 @@ settings = {
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'intervalMin': 1.0,
     'intervalMax': 1.0,
-    'initialProducts': 5,
+    'initialProducts': 25,
     'shipping': 5,
     'primeShipping': 1,
     'maxReqPerSec': 10,
-    'outstandingProductsToBuy': 0,
+    'outstandingProductsToBuy': 1,
     'underprice': 0.01
     }
 
@@ -123,7 +123,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             offer = self.offers[product.uid]
             offer.price = self.calculate_prices(offers, product.uid, product.price)
             self.marketplace_api.update_offer(offer)
-        return settings['maxReqPerSec']
+        return settings['maxReqPerSec']/10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price):
         competitive_offers = []

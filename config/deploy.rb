@@ -58,6 +58,14 @@ namespace :deploy do
       end
     end
   end
+  task :activate_cheapest_merchant do
+    on roles :all do
+      within release_path do
+        execute "cd #{release_path}/ && sed -i 's/simple_competition_logic/sample_merchant/' merchant_app.wsgi"
+        execute "cd #{release_path}/ && sed -i 's/MerchantApp/CheapestMerchantApp/' merchant_app.wsgi"
+      end
+    end
+  end
 
   after :deploy, "deploy:start"
 end

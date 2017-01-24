@@ -13,11 +13,6 @@ import merchant_sdk.strategies
 merchant_token = "{{API_TOKEN}}"
 #merchant_token = 't3LvIwV9wN3pWMBdvysjtoR3zWEV1JLtMgpedLnaiqQFEbs9alsUaLXarl6s5RmQ'
 
-def build_sample_fix_price_by_product_uid():
-    prices = {}
-
-    return prices
-
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
@@ -48,6 +43,11 @@ def get_from_list_by_key(dict_list, key, value):
 
 
 class MerchantSampleLogic(MerchantBaseLogic):
+    '''
+        TODO:
+            - handle basic settings in SdK
+            - handle GET / UPDATE of settings in SdK
+    '''
     def __init__(self):
         MerchantBaseLogic.__init__(self)
         global settings

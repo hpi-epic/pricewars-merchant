@@ -98,6 +98,6 @@ class MerchantBaseLogic:
         """
         Do not block execution
         :param offer_json:
-        :return:
+        :return: does not matter, but must be in time
         """
         pass

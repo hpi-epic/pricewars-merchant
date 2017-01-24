@@ -6,7 +6,17 @@ import pandas as pd
 from random import randint
 from datetime import datetime, timedelta
 
-def be_cheapest(market_situation, product_uid, underprice, purchase_price):
+'''
+    The following methods realizing different pricing strategies which can be used dynamically via settings.
+'''
+
+
+'''
+    be_cheapest: Evaluation the current market situation and setting the price with regards to the cheapest player
+                 in the market and the configured underprice to be the new cheapest player.
+'''
+def be_cheapest(market_situation, product_uid, settings, purchase_price):
+    underprice = settings['underprice']
     offers = []
     cheapest_offer = 999
     [offers.append(offer) for i,offer in enumerate(market_situation) if offer["uid"] == product_uid]
@@ -17,9 +27,14 @@ def be_cheapest(market_situation, product_uid, underprice, purchase_price):
             cheapest_offer = offer["price"]
     return (cheapest_offer - underprice)
 
-def be_second(market_situation, product_uid, underprice, purchase_price):
+'''
+    be_second_expensive: Evaluation the current market situation and setting the price with regards to the most expensive player
+                         in the market and the configured underprice to be the second expensive player.
+'''
+def be_second_expensive(market_situation, product_uid, settings, purchase_price):
+    underprice = settings['underprice']
     offers = []
-    most_expensive_offer = 999
+    most_expensive_offer = 0
     [offers.append(offer) for i,offer in enumerate(market_situation) if offer["uid"] == product_uid]
     if len(offers) == 0:
         return 2*purchase_price
@@ -27,3 +42,27 @@ def be_second(market_situation, product_uid, underprice, purchase_price):
         if offer["price"] > most_expensive_offer:
             most_expensive_offer = offer["price"]
     return (most_expensive_offer - underprice)
+
+'''
+    be_second_cheapest: Evaluation the current market situation and setting the price with regards to the second cheapest player
+                        in the market and the configured underprice to be the new second cheapest player.
+'''
+def be_second_cheapest(market_situation, product_uid, settings, purchase_price):
+    underprice = settings['underprice']
+    offers = []
+    cheapest_offer = 999
+    [offers.append(offer) for i,offer in enumerate(market_situation) if offer["uid"] == product_uid]
+    if len(offers) == 0:
+        return 2*purchase_price
+    for i,offer in enumerate(offers):
+        if offer["price"] < cheapest_offer:
+            second_cheapest_offer = cheapest_offer
+            cheapest_offer = offer["price"]
+    return (second_cheapest_offer - underprice)
+
+'''
+    use_fix_price: Simple using a fix price based on purchase price and global margin
+'''
+def use_fix_price(market_situation, product_uid, settings, purchase_price):
+    margin = settings['globalProfitMarginForFixPrice']
+    return (purchase_price + margin)

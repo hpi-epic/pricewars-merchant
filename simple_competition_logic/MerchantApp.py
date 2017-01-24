@@ -12,6 +12,11 @@ from merchant_sdk.models import Offer
 merchant_token = "{{API_TOKEN}}"
 #merchant_token = 't3LvIwV9wN3pWMBdvysjtoR3zWEV1JLtMgpedLnaiqQFEbs9alsUaLXarl6s5RmQ'
 
+def build_sample_fix_price_by_product_uid():
+    prices = {}
+
+    return prices
+
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
@@ -29,7 +34,8 @@ settings = {
     'tick': 100.0,
     'max_req_per_sec': 10,
     'pricing_strategy': 'be_cheapest',
-    'underprice': 0.01
+    'underprice': 0.01,
+    'globalProfitMarginForFixPrice': 10
 }
 
 
@@ -131,7 +137,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         offers = self.marketplace_api.get_offers()
 
-        missing_offers = self.settings[initialProducts] - len(offers)
+        missing_offers = self.settings["initialProducts"] - len(offers)
         for missing_offer in range(missing_offers):
             self.buy_product_and_update_offer()
 
@@ -148,11 +154,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
-    def adjust_prices_by_strategy(self, offer=None, product=None, market_situation):
+    def adjust_prices_by_strategy(self, offer, product, market_situation):
         if not offer or not product:
             return
         # calling pricing strategy dynamic based on settings
-        offer.price = getattr(Strategies, settings['pricing_strategy'])(offers, product.uid, settings['underprice'], product.price)
+        offer.price = getattr(Strategies, settings['pricing_strategy'])(offers, product.uid, settings, product.price)
         self.marketplace_api.update_offer(offer)
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):

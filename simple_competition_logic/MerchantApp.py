@@ -137,7 +137,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         offers = self.marketplace_api.get_offers()
 
-        missing_offers = self.settings["initialProducts"] - len(offers)
+        missing_offers = self.settings["initialProducts"] - len(self.offers)
         for missing_offer in range(missing_offers):
             self.buy_product_and_update_offer()
 
@@ -148,13 +148,14 @@ class MerchantSampleLogic(MerchantBaseLogic):
                     competitor_offers.append(offer.price)
             if len(competitor_offers) > 0:
                 offer = self.offers[product.uid]
-                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
+                #self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
+                self.adjust_prices_by_strategy(offer=offer, product=product, competitor_offers):
 
         # returns sleep value; higher tick is proportional to higher sleep value
         return settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
-    def adjust_prices_by_strategy(self, offer, product, market_situation):
+    def adjust_prices_by_strategy(self, offer, product, offers):
         if not offer or not product:
             return
         # calling pricing strategy dynamic based on settings

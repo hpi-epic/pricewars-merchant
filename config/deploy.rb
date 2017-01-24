@@ -63,6 +63,7 @@ namespace :deploy do
       within release_path do
         execute "cd #{release_path}/ && sed -i 's/simple_competition_logic/sample_merchant/' merchant_app.wsgi"
         execute "cd #{release_path}/ && sed -i 's/MerchantApp/CheapestMerchantApp/' merchant_app.wsgi"
+        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' CheapestMerchantApp.py"
       end
     end
   end

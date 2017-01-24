@@ -10,8 +10,8 @@ import merchant_sdk.strategies
 '''
     Template for Ruby deployment to insert defined tokens
 '''
-#merchant_token = "{{API_TOKEN}}"
-merchant_token = 'Mz7J8Y8lKOFZ0fWH4MBMpG8BFCnJQXymX66feERzcgZcL6uQR6mHMuSb7GuXntKL'
+merchant_token = "{{API_TOKEN}}"
+#merchant_token = 'Mz7J8Y8lKOFZ0fWH4MBMpG8BFCnJQXymX66feERzcgZcL6uQR6mHMuSb7GuXntKL'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),

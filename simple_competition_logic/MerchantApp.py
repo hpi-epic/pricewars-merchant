@@ -148,7 +148,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return settings['tick']/settings['max_req_per_sec']
         #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
-    def adjust_prices_by_strategy(self, offer=None, product=None, market_situation):
+    def adjust_prices_by_strategy(self, offer, product, market_situation):
         if not offer or not product:
             return
         # calling pricing strategy dynamic based on settings

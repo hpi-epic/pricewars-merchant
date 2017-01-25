@@ -51,6 +51,11 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         '''
         self.run_logic_loop()
 
+        '''
+            save purchase prices for offer updates
+        '''
+        self.purchase_prices = {}
+
     def update_api_endpoints(self):
         self.marketplace_api.host = self.settings['marketplace_url']
         self.producer_api.host = self.settings['producerEndpoint']
@@ -76,11 +81,17 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def buy_product_and_post_to_marketplace(self, all_offers):
         print('buy Product and update')
-        new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
+        new_product = self.buy_product()
         existing_offers = self.get_existing_uid_offers_from_marketplace(all_offers, new_product.uid)
         target_price = self.get_second_cheapest_price(existing_offers, new_product.price)
         existing_offer = self.get_own_offer_for_product_uid(existing_offers, new_product.uid)
         self.post_offer(new_product, target_price, existing_offer)
+
+    def buy_product(self):
+        new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
+        if new_product.uid not in self.purchase_prices:
+            self.purchase_prices[new_product.uid] = new_product.price
+        return new_product
 
     def get_existing_uid_offers_from_marketplace(self, all_offers, product_uid):
         uid_offers = [offer for offer in all_offers if offer.uid == product_uid]
@@ -134,7 +145,8 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
             for product_uid in [uid[0] for uid in sorted(offers_per_traded_product.items(), key=operator.itemgetter(1), reverse=True)]:
                 existing_offers_for_product_id = self.get_existing_uid_offers_from_marketplace(all_offers_i_offer_as_well, product_uid)
-                target_price = self.get_second_cheapest_price(existing_offers_for_product_id, 50.0)
+                purchase_price = self.purchase_prices[product_uid]
+                target_price = self.get_second_cheapest_price(existing_offers_for_product_id, purchase_price)
                 existing_offer = self.get_own_offer_for_product_uid(existing_offers_for_product_id, product_uid)
                 self.update_offer(existing_offer, target_price)
         except Exception as e:

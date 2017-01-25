@@ -24,19 +24,13 @@ settings = {
     'merchant_url': 'http://172.16.57.75:5000',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
-    'priceDecrease': 1,
-    'intervalMin': 1.0,
-    'intervalMax': 1.0,
     'initialProducts': 30,
-    'minPriceMargin': 16,
-    'maxPriceMargin': 32,
     'shipping': 5,
     'primeShipping': 1,
     'debug': True,
     'max_req_per_sec': 10,
-    'pricing_strategy': 'be_cheapest',
+    'pricing_strategy': 'RandomThird',
     'underprice': 0.01,
-    'globalProfitMarginForFixPrice': 10
 }
 
 
@@ -154,7 +148,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         # returns sleep value;
         return settings['max_req_per_sec']/60
-        #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0,second_competitor_price=0,third_competitor_price=0):
         if not offer or not product:
@@ -188,7 +181,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     def add_new_product_to_offers(self, new_product):
         new_offer = Offer.from_product(new_product)
-        new_offer.price += settings['maxPriceMargin']
+        new_offer.price = new.price*2
         new_offer.shipping_time = {
             'standard': settings['shipping'],
             'prime': settings['primeShipping']

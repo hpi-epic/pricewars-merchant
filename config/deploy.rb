@@ -58,6 +58,34 @@ namespace :deploy do
       end
     end
   end
+  task :activate_merchant_a do
+    on roles :all do
+      within release_path do
+        #execute "cd #{release_path}/ && sed -i 's/simple_competition_logic/sample_merchant/' merchant_app.wsgi"
+        #execute "cd #{release_path}/ && sed -i 's/MerchantApp/CheapestMerchantApp/' merchant_app.wsgi"
+        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' CheapestMerchantApp.py"
+        execute "cp #{release_path}/sample_merchant/CheapestMerchantApp.py #{release_path}/simple_competition_logic/MerchantApp.py"
+      end
+    end
+  end
+  task :activate_merchant_e do
+    on roles :all do
+      within release_path do
+        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' MerchantE.py"
+        execute "cp #{release_path}/sample_merchant/MerchantE.py #{release_path}/simple_competition_logic/MerchantApp.py"
+      end
+    end
+  end
+  task :activate_merchant_d do
+    on roles :all do
+      within release_path do
+        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' MerchantD.py"
+        execute "cp #{release_path}/sample_merchant/MerchantD.py #{release_path}/simple_competition_logic/MerchantApp.py"
+      end
+    end
+  end
+
+
 
   after :deploy, "deploy:start"
 end

@@ -2,6 +2,7 @@
 .DS_Store
 
 .idea
+config/id_rsa*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

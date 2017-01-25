@@ -5,41 +5,38 @@ sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
-import merchant_sdk.strategies
 
-'''
-    Template for Ruby deployment to insert defined tokens
-'''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'Mz7J8Y8lKOFZ0fWH4MBMpG8BFCnJQXymX66feERzcgZcL6uQR6mHMuSb7GuXntKL'
+#merchant_token = "rYy8nnr1rWKSoTLwgfytbsdCTstIG5A8c9FQw8RndlGTFbQvHPpsIT5lMy4b4Ejg"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://172.16.56.166:5000',
+    'merchant_url': 'http://',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
-    'intervalMin': 1.0,
-    'intervalMax': 1.0,
-    'initialProducts': 25,
-    'shipping': 5,
+    'priceDecrease': 0.05,
+    'initialProducts': 3,
+    'minPriceMargin': 16,
+    'maxPriceMargin': 32,
+    'shipping': 1,
     'primeShipping': 1,
-    'maxReqPerSec': 10,
-    'outstandingProductsToBuy': 1,
-    'underprice': 0.01
-    }
-
-def get_from_list_by_key(dict_list, key, value):
-    elements = [elem for elem in dict_list if elem[key] == value]
-    if elements:
-        return elements[0]
-    return None
+    'debug': True,
+    'max_req_per_sec': 10,
+    'underprice': 0.05
+}
 
 
-class MerchantSampleLogic(MerchantBaseLogic):
+class MerchantD(MerchantBaseLogic):
     def __init__(self):
         MerchantBaseLogic.__init__(self)
         global settings
         self.settings = settings
+
+        '''
+            Internal state handling
+        '''
+        self.execQueue = []
+
 
         '''
             Information store
@@ -74,10 +71,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.marketplace_api.host = self.settings['marketplace_url']
         self.producer_api.host = self.settings['producerEndpoint']
 
-    '''
-        Implement Abstract methods / Interface
-    '''
-
     def get_settings(self):
         return self.settings
 
@@ -98,49 +91,68 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
-        settings['outstandingProductsToBuy'] += 1
+        self.execQueue.append((self.sold_product, [offer]))
 
-    '''
-        Merchant Logic for being the cheapest
-    '''
     def setup(self):
         try:
-            marketplace_offers = self.marketplace_api.get_offers()
             for i in range(settings['initialProducts']):
-                self.buy_product_and_update_offer(marketplace_offers)
+                self.buy_product_and_update_offer()
         except Exception as e:
             print('error on setup:', e)
 
     def execute_logic(self):
+        # execute queued methods
+        tmp_queue = [e for e in self.execQueue]
+        self.execQueue = []
+        print('queue', tmp_queue)
+        for method, args in tmp_queue:
+            method(*args)
+
         offers = self.marketplace_api.get_offers()
 
         missing_offers = self.settings["initialProducts"] - len(self.offers)
         for missing_offer in range(missing_offers):
-            self.buy_product_and_update_offer(offers)
+            self.buy_product_and_update_offer()
 
         for product in self.products.values():
+            competitor_offers = []
+            for offer in offers:
+                if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
+                    competitor_offers.append(offer.price)
             offer = self.offers[product.uid]
-            offer = self.offers[product.uid]
-            offer.price = self.calculate_prices(offers, product.uid, product.price)
-            self.marketplace_api.update_offer(offer)
-        return settings['maxReqPerSec']/10
+            if len(competitor_offers) > 0:
+                offer = self.offers[product.uid]
+                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
-    def calculate_prices(self, marketplace_offers, product_uid, purchase_price):
-        competitive_offers = []
-        [competitive_offers.append(offer) for offer in marketplace_offers if offer.merchant_id != self.merchant_id and offer.uid == product_uid]
-        cheapest_offer = 999
+        return 70.0/settings['max_req_per_sec']
 
-        if len(competitive_offers) == 0:
-            return 2 * purchase_price
-        for offer in competitive_offers:
-            if offer.price < cheapest_offer:
-                cheapest_offer = offer.price
+    def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
+        if not offer or not product:
+            return
+        min_price = product.price + settings['minPriceMargin']
+        max_price = product.price + settings['maxPriceMargin']
+        price = lowest_competitor_price - settings['priceDecrease']
+        price = min(price, max_price)
+        if price < min_price:
+            price = max_price
+        offer.price = price
+        self.marketplace_api.update_offer(offer)
 
-        return cheapest_offer - settings['underprice']
+    def sold_product(self, sold_offer):
+        print('soldProduct, offer:', sold_offer)
+        if sold_offer.uid in self.offers:
+            print('found in offers')
+            offer = self.offers[sold_offer.uid]
+            offer.amount -= sold_offer.amount_sold
+            product = self.products[sold_offer.uid]
+            product.amount -= sold_offer.amount_sold
+            if product.amount <= 0:
+                print('product {:d} is out of stock!'.format(product.uid))
+            self.buy_product_and_update_offer()
 
-    def add_new_product_to_offers(self, new_product, marketplace_offers):
+    def add_new_product_to_offers(self, new_product):
         new_offer = Offer.from_product(new_product)
-        new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price)
+        new_offer.price += settings['maxPriceMargin']
         new_offer.shipping_time = {
             'standard': settings['shipping'],
             'prime': settings['primeShipping']
@@ -150,7 +162,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
         self.offers[new_product.uid] = new_offer
 
-    def restock_existing_product(self, new_product, marketplace_offers):
+    def restock_existing_product(self, new_product):
         print('restock product', new_product)
         product = self.products[new_product.uid]
         product.amount += new_product.amount
@@ -158,26 +170,26 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         offer = self.offers[product.uid]
         print('in this offer:', offer)
-        offer.price = self.calculate_prices(marketplace_offers, product.uid, product.price)
         offer.amount = product.amount
         offer.signature = product.signature
         self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
 
-    def buy_product_and_update_offer(self, marketplace_offers):
+    def buy_product_and_update_offer(self):
+        print('buy Product and update')
         new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
 
         if new_product.uid in self.products:
-            self.restock_existing_product(new_product, marketplace_offers)
+            self.restock_existing_product(new_product)
         else:
-            self.add_new_product_to_offers(new_product, marketplace_offers)
+            self.add_new_product_to_offers(new_product)
 
 
-merchant_logic = MerchantSampleLogic()
+merchant_logic = MerchantD()
 merchant_server = MerchantServer(merchant_logic)
 app = merchant_server.app
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
+    parser = argparse.ArgumentParser(description='PriceWars Merchant')
     parser.add_argument('--port', type=int,
                         help='port to bind flask App to')
     args = parser.parse_args()

@@ -86,7 +86,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
     '''
 
     def price_product(self, product):
-        return (1.0 + self.settings['fixed_margin_perc']) * product.price
+        return (1.0 + self.settings['fixed_margin_perc'] / 100.0) * product.price
 
     def execute_logic(self):
         offers = self.marketplace_api.get_offers()

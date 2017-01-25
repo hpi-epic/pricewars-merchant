@@ -151,9 +151,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
-        # returns sleep value; higher tick is proportional to higher sleep value
-        return settings['max_req_per_sec']
-        #return random.uniform(self.settings['intervalMin'],self.settings['intervalMax'])
+        return settings['max_req_per_sec']/60
 
     # def adjust_prices_by_strategy(self, offer, product, offers):
     #     if not offer or not product:

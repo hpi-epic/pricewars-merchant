@@ -6,6 +6,7 @@ from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
 
+merchant_token = "{{API_TOKEN}}"
 merchant_token = "rYy8nnr1rWKSoTLwgfytbsdCTstIG5A8c9FQw8RndlGTFbQvHPpsIT5lMy4b4Ejg"
 
 settings = {
@@ -20,7 +21,6 @@ settings = {
     'shipping': 1,
     'primeShipping': 1,
     'debug': True,
-    'tick': 100.0,
     'max_req_per_sec': 10,
     'underprice': 0.05
 }
@@ -124,7 +124,6 @@ class MerchantD(MerchantBaseLogic):
                 offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
-        # returns sleep value; higher tick is proportional to higher sleep value
         return 70.0/settings['max_req_per_sec']
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):

@@ -8,7 +8,7 @@ server "tunnel.framsteg.de", user: "deployer", roles: %w(www)
 # uncomment in case of travis, capistrano will have its own
 set :ssh_options, keys: ["config/id_rsa"] if File.exist?("config/id_rsa")
 set :ssh_options, port: 7047
-set :api_token, "rYy8nnr1rWKSoTLwgfytbsdCTstIG5A8c9FQw8RndlGTFbQvHPpsIT5lMy4b4Ejg"
+set :api_token, "nCsGbMLXaTDONMhK3KuEb8vlkjtwuyWiBPyllKKMnXkBsRVvlQANY69Jp4Gk3mUE"
 set :deploy_to, "/var/www/pricewars-merchant5"
 
 after :deploy, "deploy:activate_merchant_d"

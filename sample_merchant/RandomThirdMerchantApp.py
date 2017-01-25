@@ -11,8 +11,8 @@ from random import randint
 '''
     Template for Ruby deployment to insert defined tokens
 '''
-#merchant_token = "{{API_TOKEN}}"
-merchant_token = 'GEKDWUPsjYDMH7jUlhw3tD5YZZowGneW3yjZT8RDgfZxmJSY1OaubfSBFH8V6m28'
+merchant_token = "{{API_TOKEN}}"
+#merchant_token = 'GEKDWUPsjYDMH7jUlhw3tD5YZZowGneW3yjZT8RDgfZxmJSY1OaubfSBFH8V6m28'
 
 def build_sample_fix_price_by_product_uid():
     prices = {}

@@ -19,7 +19,7 @@ settings = {
     'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
-    'listedOffers': 3,
+    'listedOffers': 15,
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10,

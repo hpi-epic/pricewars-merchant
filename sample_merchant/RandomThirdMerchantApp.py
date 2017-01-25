@@ -138,13 +138,14 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
                     competitor_offers.append(offer.price)
             offer = self.offers[product.uid]
-            competitor_offers.sort()
-            if len(competitor_offers) > 2:
-                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1], third_competitor_price=competitor_offers[2])
-            elif len(competitor_offers) > 1:
-                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1],third_competitor_price=0)
-            elif len(competitor_offers) > 0:
-                self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
+            if len(competitor_offers) >0:
+                competitor_offers.sort()
+                if len(competitor_offers) > 2:
+                    self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1], third_competitor_price=competitor_offers[2])
+                elif len(competitor_offers) > 1:
+                    self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1],third_competitor_price=0)
+                else:
+                    self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
 
         # returns sleep value;
         return settings['max_req_per_sec']/60

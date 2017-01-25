@@ -23,7 +23,8 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10,
-    'priceDifference': 0.01
+    'priceDifference': 0.01,
+    'minimumMarginPercentile': 10
 }
 
 
@@ -107,6 +108,8 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 second_cheapest_offer = cheapest_offer - self.settings['priceDifference']
                 cheapest_offer = offer.price
 
+        if second_cheapest_offer < purchase_price:
+            second_cheapest_offer = purchase_price * (self.settings['minimumMarginPercentile'] / 100.0)
         return second_cheapest_offer
 
     def get_own_offer_for_product_uid(self, offers, product_uid):
@@ -164,18 +167,27 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             print('error on refilling offers:', e)
 
     def setup(self):
-        all_offers = self.marketplace_api.get_offers()
-        self.refill_offers(all_offers)
+        try:
+            all_offers = self.marketplace_api.get_offers()
+            self.refill_offers(all_offers)
+        except Exception as e:
+            print('error on setting up offers:', e)
 
     def execute_logic(self):
-        all_offers = self.marketplace_api.get_offers()
-        self.adjust_prices(all_offers)
-        self.refill_offers(all_offers)
+        try:
+            all_offers = self.marketplace_api.get_offers()
+            self.adjust_prices(all_offers)
+            self.refill_offers(all_offers)
+        except Exception as e:
+            print('error on executing logic:', e)
         return self.interval
 
     def sold_offer(self, offer_json):
-        all_offers = self.marketplace_api.get_offers()
-        self.refill_offers(all_offers)
+        try:
+            all_offers = self.marketplace_api.get_offers()
+            self.refill_offers(all_offers)
+        except Exception as e:
+            print('error on handling sold offers:', e)
 
 
 '''

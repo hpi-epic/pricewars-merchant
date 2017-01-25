@@ -182,7 +182,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     def add_new_product_to_offers(self, new_product):
         new_offer = Offer.from_product(new_product)
-        new_offer.price = new.price*2
+        new_offer.price = new_offer.price*2
         new_offer.shipping_time = {
             'standard': settings['shipping'],
             'prime': settings['primeShipping']

@@ -29,7 +29,6 @@ settings = {
     'primeShipping': 1,
     'debug': True,
     'max_req_per_sec': 10,
-    'pricing_strategy': 'be_cheapest',
     'underprice': 0.01,
     'globalProfitMarginForFixPrice': 10
 }
@@ -148,20 +147,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
                 if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
                     competitor_offers.append(offer.price)
             offer = self.offers[product.uid]
-            # self.adjust_prices_by_strategy(offer, product, competitor_offers)
             if len(competitor_offers) > 0:
                 offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
 
         return settings['max_req_per_sec']/60
-
-    # def adjust_prices_by_strategy(self, offer, product, offers):
-    #     if not offer or not product:
-    #         return
-    #     # calling pricing strategy dynamic based on settings
-    #     strategy = getattr(merchant_sdk.strategies, settings['pricing_strategy'])
-    #     offer.price = strategy(offers, product.uid, settings, product.price)
-    #     self.marketplace_api.update_offer(offer)
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0):
         if not offer or not product:

@@ -92,8 +92,14 @@ namespace :deploy do
       end
     end
   end
-
-
+  task :activate_merchant_b do
+    on roles :all do
+      within release_path do
+        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' SecondCheapestMerchantApp.py"
+        execute "cp #{release_path}/sample_merchant/SecondCheapestMerchantApp.py #{release_path}/simple_competition_logic/MerchantApp.py"
+      end
+    end
+  end
 
   after :deploy, "deploy:start"
 end

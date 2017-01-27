@@ -11,8 +11,8 @@ from merchant_sdk.models import Offer
     Start implementation
 '''
 
-merchant_token = 'PlmNksxJyL9bei6288Utupsi1vecpdPGOCd96aS4wbfbLmdTu8NpxFYxBDa1q1HF'
-merchant_id = 'MpWsNBYFvUgqq+rI0FGDTPYJ/RLB9ED7KLmIQwGqzAk='
+merchant_token = "{{API_TOKEN}}"
+# merchant_token = 'PlmNksxJyL9bei6288Utupsi1vecpdPGOCd96aS4wbfbLmdTu8NpxFYxBDa1q1HF'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),

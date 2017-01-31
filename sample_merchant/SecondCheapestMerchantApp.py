@@ -192,6 +192,8 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         return self.interval
 
     def sold_offer(self, offer_json):
+        if self.state != 'running':
+            return
         try:
             all_offers = self.marketplace_api.get_offers(include_empty_offers=True)
             self.refill_offers(all_offers)

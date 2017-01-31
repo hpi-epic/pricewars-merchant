@@ -13,14 +13,8 @@ from random import randint
 merchant_token = "{{API_TOKEN}}"
 #merchant_token = 'GEKDWUPsjYDMH7jUlhw3tD5YZZowGneW3yjZT8RDgfZxmJSY1OaubfSBFH8V6m28'
 
-def build_sample_fix_price_by_product_uid():
-    prices = {}
-
-    return prices
-
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de:85',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'initialProducts': 5,
@@ -133,7 +127,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         for product in self.products.values():
             competitor_offers = []
             for offer in offers:
-                if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
+                if offer.merchant_id != self.merchant_id and offer.product_id == product.product_id:
                     competitor_offers.append(offer.price)
             offer = self.offers[product.uid]
             if len(competitor_offers) >0:

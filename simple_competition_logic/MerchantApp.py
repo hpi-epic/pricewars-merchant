@@ -80,6 +80,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def update_settings(self, new_settings):
         MerchantBaseLogic.update_settings(self, new_settings)
         self.update_api_endpoints()
+        return self.settings
 
     '''
         Implement Abstract methods / Interface

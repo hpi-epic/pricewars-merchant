@@ -1,5 +1,5 @@
 ###
-# Merchant D / MerchantApp
+# Merchant D / TwoBoundMerchantApp
 ##
 
 role :www, %w(deployer@tunnel.framsteg.de)

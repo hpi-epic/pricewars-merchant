@@ -1,5 +1,5 @@
 ###
-# Merchant E / MerchantApp
+# Merchant E / FixPriceMerchantApp
 ##
 
 role :www, %w(deployer@tunnel.framsteg.de)

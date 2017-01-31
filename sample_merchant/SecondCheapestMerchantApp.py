@@ -84,8 +84,10 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         return uid_offers
 
     def get_second_cheapest_price(self, offers, purchase_price):
-        second_cheapest_offer = cheapest_offer = 2 * purchase_price
-        for offer in sorted(offers, key=lambda offer_entry: offer_entry.price, reverse=True):
+        maximum_price = 2 * purchase_price
+        minimum_price = purchase_price * (self.settings['minimumMarginPercentile'] / 100.0)
+        second_cheapest_offer = cheapest_offer = maximum_price
+        for offer in offers:
             if offer.merchant_id == self.merchant_id:
                 continue
 
@@ -93,9 +95,9 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 second_cheapest_offer = cheapest_offer
                 cheapest_offer = offer.price
 
-        second_cheapest_offer -= self.settings['priceDifference']
-        minimum_price = purchase_price * (self.settings['minimumMarginPercentile'] / 100.0)
-        # Prevent offers that are below our minimum price
+        target_price = second_cheapest_offer - self.settings['priceDifference']
+        if second_cheapest_offer < maximum_price and target_price >= cheapest_offer:
+            second_cheapest_offer = target_price
 
         if second_cheapest_offer < minimum_price:
             second_cheapest_offer = minimum_price

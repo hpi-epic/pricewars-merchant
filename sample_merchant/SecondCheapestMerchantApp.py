@@ -98,7 +98,8 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         return second_cheapest_offer
 
     def get_own_offer_for_product_uid(self, offers, product_uid):
-        return next((offer for offer in offers if offer.merchant_id == self.merchant_id and offer.uid == product_uid), None)
+        return next((offer for offer in offers if offer.merchant_id == self.merchant_id and offer.uid == product_uid),
+                    None)
 
     def post_offer(self, product, price, existing_offer):
         new_offer = Offer.from_product(product)
@@ -132,8 +133,10 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             for offer in all_offers_i_offer_as_well:
                 offers_per_traded_product[offer.uid] = offers_per_traded_product.get(offer.uid, 0) + 1
 
-            for product_uid in [uid[0] for uid in sorted(offers_per_traded_product.items(), key=operator.itemgetter(1), reverse=True)]:
-                existing_offers_for_product_id = self.get_existing_uid_offers_from_marketplace(all_offers_i_offer_as_well, product_uid)
+            for product_uid in [uid[0] for uid in
+                                sorted(offers_per_traded_product.items(), key=operator.itemgetter(1), reverse=True)]:
+                existing_offers_for_product_id = self.get_existing_uid_offers_from_marketplace(
+                    all_offers_i_offer_as_well, product_uid)
                 purchase_price = self.purchase_prices[product_uid]
                 target_price = self.get_second_cheapest_price(existing_offers_for_product_id, purchase_price)
                 existing_offer = self.get_own_offer_for_product_uid(existing_offers_for_product_id, product_uid)
@@ -157,14 +160,14 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def setup(self):
         try:
-            all_offers = self.marketplace_api.get_offers()
+            all_offers = self.marketplace_api.get_offers(include_empty_offers=True)
             self.refill_offers(all_offers)
         except Exception as e:
             print('error on setting up offers:', e)
 
     def execute_logic(self):
         try:
-            all_offers = self.marketplace_api.get_offers()
+            all_offers = self.marketplace_api.get_offers(include_empty_offers=True)
             self.adjust_prices(all_offers)
             self.refill_offers(all_offers)
         except Exception as e:
@@ -173,7 +176,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def sold_offer(self, offer_json):
         try:
-            all_offers = self.marketplace_api.get_offers()
+            all_offers = self.marketplace_api.get_offers(include_empty_offers=True)
             self.refill_offers(all_offers)
         except Exception as e:
             print('error on handling sold offers:', e)

@@ -85,7 +85,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def get_second_cheapest_price(self, offers, purchase_price):
         maximum_price = 2 * purchase_price
-        minimum_price = purchase_price * (self.settings['minimumMarginPercentile'] / 100.0)
+        minimum_price = purchase_price * (1 + (self.settings['minimumMarginPercentile'] / 100.0))
         second_cheapest_offer = cheapest_offer = maximum_price
         for offer in offers:
             if offer.merchant_id == self.merchant_id:
@@ -94,6 +94,8 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             if offer.price < cheapest_offer:
                 second_cheapest_offer = cheapest_offer
                 cheapest_offer = offer.price
+            elif cheapest_offer < offer.price < second_cheapest_offer:
+                second_cheapest_offer = offer.price
 
         target_price = second_cheapest_offer - self.settings['priceDifference']
         if second_cheapest_offer < maximum_price and target_price >= cheapest_offer:
@@ -152,7 +154,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 # Iterate over my offers based on the quality, starting with the best quality (lowest quality number)
                 for product_uid in [offer.uid for offer in sorted(self.get_own_offers(existing_offers_for_product_id),
                                                                   key=lambda offer_entry: offer_entry.quality)]:
-                    purchase_price = self.purchase_prices[product_uid]
+                    purchase_price = self.purchase_prices[product_uid]  # ToDo: Handle error!
                     target_price = self.get_second_cheapest_price(existing_offers_for_product_id, purchase_price)
                     existing_offer = self.get_own_offer_for_product_uid(existing_offers_for_product_id, product_uid)
                     self.update_offer(existing_offer, target_price)

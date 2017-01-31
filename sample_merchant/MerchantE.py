@@ -11,7 +11,6 @@ merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://localhost:1337',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'debug': True,
@@ -60,24 +59,9 @@ class MerchantSampleLogic(MerchantBaseLogic):
         Implement Abstract methods / Interface
     '''
 
-    def get_settings(self):
-        return self.settings
-
     def update_settings(self, new_settings):
-        def cast_to_expected_type(key, value, def_settings=self.settings):
-            if key in def_settings:
-                return type(def_settings[key])(value)
-            else:
-                return value
-
-        new_settings_casted = dict([
-            (key, cast_to_expected_type(key, new_settings[key]))
-            for key in new_settings
-        ])
-
-        self.settings.update(new_settings_casted)
+        MerchantBaseLogic.update_settings(self, new_settings)
         self.update_api_endpoints()
-        return self.settings
 
     def sold_offer(self, offer):
         print('sold offer:', offer)

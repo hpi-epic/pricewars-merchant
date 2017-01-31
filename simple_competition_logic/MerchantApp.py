@@ -16,7 +16,6 @@ merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 1,
@@ -34,19 +33,7 @@ settings = {
 }
 
 
-def get_from_list_by_key(dict_list, key, value):
-    elements = [elem for elem in dict_list if elem[key] == value]
-    if elements:
-        return elements[0]
-    return None
-
-
 class MerchantSampleLogic(MerchantBaseLogic):
-    '''
-        TODO:
-            - handle basic settings in SdK
-            - handle GET / UPDATE of settings in SdK
-    '''
     def __init__(self):
         MerchantBaseLogic.__init__(self)
         global settings
@@ -90,28 +77,13 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.marketplace_api.host = self.settings['marketplace_url']
         self.producer_api.host = self.settings['producerEndpoint']
 
+    def update_settings(self, new_settings):
+        MerchantBaseLogic.update_settings(self, new_settings)
+        self.update_api_endpoints()
+
     '''
         Implement Abstract methods / Interface
     '''
-
-    def get_settings(self):
-        return self.settings
-
-    def update_settings(self, new_settings):
-        def cast_to_expected_type(key, value, def_settings=self.settings):
-            if key in def_settings:
-                return type(def_settings[key])(value)
-            else:
-                return value
-
-        new_settings_casted = dict([
-            (key, cast_to_expected_type(key, new_settings[key]))
-            for key in new_settings
-        ])
-
-        self.settings.update(new_settings_casted)
-        self.update_api_endpoints()
-        return self.settings
 
     def sold_offer(self, offer):
         self.execQueue.append((self.sold_product, [offer]))
@@ -146,7 +118,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
             for offer in offers:
                 if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
                     competitor_offers.append(offer.price)
-            offer = self.offers[product.uid]
             if len(competitor_offers) > 0:
                 offer = self.offers[product.uid]
                 self.adjust_prices(offer=offer, product=product, lowest_competitor_price=min(competitor_offers))
@@ -180,7 +151,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def add_new_product_to_offers(self, new_product):
         new_offer = Offer.from_product(new_product)
         new_offer.price += settings['maxPriceMargin']
-        # Model?
         new_offer.shipping_time = {
             'standard': settings['shipping'],
             'prime': settings['primeShipping']
@@ -191,20 +161,16 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.offers[new_product.uid] = new_offer
 
     def restock_existing_product(self, new_product):
-        print('restock product', new_product)
         product = self.products[new_product.uid]
         product.amount += new_product.amount
         product.signature = new_product.signature
 
         offer = self.offers[product.uid]
-        print('in this offer:', offer)
         offer.amount = product.amount
         offer.signature = product.signature
         self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
 
     def buy_product_and_update_offer(self):
-        print('buy Product and update')
-        # TODO: Extract token
         new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
 
         if new_product.uid in self.products:

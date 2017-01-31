@@ -13,6 +13,7 @@ class MerchantBaseLogic:
     __metaclass__ = ABCMeta
 
     def __init__(self):
+        self.settings = {}
         self.interval = 5
         self.thread = None
         self.state = 'initialized'
@@ -49,14 +50,23 @@ class MerchantBaseLogic:
         Settings and merchant controls for Web-Frontend
     '''
 
-    @abstractmethod
     def get_settings(self):
-        return base_settings
+        return self.settings
 
-    @abstractmethod
-    def update_settings(self, settings):
-        global base_settings
-        base_settings.update(settings)
+    def update_settings(self, new_settings):
+        def cast_to_expected_type(key, value, def_settings=self.settings):
+            if key in def_settings:
+                return type(def_settings[key])(value)
+            else:
+                return value
+
+        new_settings_casted = dict([
+            (key, cast_to_expected_type(key, new_settings[key]))
+            for key in new_settings
+        ])
+
+        self.settings.update(new_settings_casted)
+        return self.settings
 
     def setup(self):
         """

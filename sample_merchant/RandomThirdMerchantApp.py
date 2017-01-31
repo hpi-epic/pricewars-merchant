@@ -24,7 +24,7 @@ settings = {
     'merchant_url': 'http://172.16.57.75:5000',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
-    'initialProducts': 30,
+    'initialProducts': 5,
     'shipping': 5,
     'primeShipping': 1,
     'debug': True,

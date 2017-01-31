@@ -19,7 +19,7 @@ settings = {
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'intervalMin': 1.0,
     'intervalMax': 1.0,
-    'initialProducts': 25,
+    'initialProducts': 5,
     'shipping': 5,
     'primeShipping': 1,
     'maxReqPerSec': 10,
@@ -114,6 +114,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         offers = self.marketplace_api.get_offers()
 
         missing_offers = self.settings["initialProducts"] - len(self.offers)
+        if missing_offers < 0:
+            missing_offers = 0
         for missing_offer in range(missing_offers):
             self.buy_product_and_update_offer(offers)
 

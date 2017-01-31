@@ -90,11 +90,16 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 continue
 
             if offer.price < cheapest_offer:
-                second_cheapest_offer = cheapest_offer - self.settings['priceDifference']
+                second_cheapest_offer = cheapest_offer
                 cheapest_offer = offer.price
 
-        if second_cheapest_offer < purchase_price:
-            second_cheapest_offer = purchase_price * (self.settings['minimumMarginPercentile'] / 100.0)
+        second_cheapest_offer -= self.settings['priceDifference']
+        minimum_price = purchase_price * (self.settings['minimumMarginPercentile'] / 100.0)
+        # Prevent offers that are below our minimum price
+
+        if second_cheapest_offer < minimum_price:
+            second_cheapest_offer = minimum_price
+
         return second_cheapest_offer
 
     def get_own_offer_for_product_uid(self, offers, product_uid):
@@ -154,7 +159,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 new_product = self.buy_product_and_post_to_marketplace(all_offers)
                 if new_product:
                     all_offers.append(new_product)
-                # else: product already offered and restocked
+                    # else: product already offered and restocked
         except Exception as e:
             print('error on refilling offers:', e)
 

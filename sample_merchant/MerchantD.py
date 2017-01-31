@@ -22,7 +22,7 @@ settings = {
     'primeShipping': 1,
     'debug': True,
     'max_req_per_sec': 10,
-    'underprice': 0.05
+    'underprice': 0.5
 }
 
 

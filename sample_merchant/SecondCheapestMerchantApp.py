@@ -11,8 +11,8 @@ from merchant_sdk.models import Offer
     Start implementation
 '''
 
-merchant_token = 'PlmNksxJyL9bei6288Utupsi1vecpdPGOCd96aS4wbfbLmdTu8NpxFYxBDa1q1HF'
-merchant_id = 'MpWsNBYFvUgqq+rI0FGDTPYJ/RLB9ED7KLmIQwGqzAk='
+merchant_token = "{{API_TOKEN}}"
+# merchant_token = 'PlmNksxJyL9bei6288Utupsi1vecpdPGOCd96aS4wbfbLmdTu8NpxFYxBDa1q1HF'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -86,7 +86,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         existing_offers = self.get_existing_uid_offers_from_marketplace(all_offers, new_product.uid)
         target_price = self.get_second_cheapest_price(existing_offers, new_product.price)
         existing_offer = self.get_own_offer_for_product_uid(existing_offers, new_product.uid)
-        self.post_offer(new_product, target_price, existing_offer)
+        return self.post_offer(new_product, target_price, existing_offer)
 
     def buy_product(self):
         new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
@@ -124,9 +124,10 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         }
         new_offer.prime = True
         if existing_offer is None:
-            self.marketplace_api.add_offer(new_offer)
+            return self.marketplace_api.add_offer(new_offer)
         else:
             self.marketplace_api.restock(existing_offer.offer_id, product.amount, product.signature)
+            return None
 
     def update_offer(self, own_offer, target_price):
         own_offer.price = target_price
@@ -162,7 +163,10 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         existing_offers = self.get_amount_of_own_offers(all_offers)
         try:
             for i in range(settings['listedOffers'] - existing_offers):
-                self.buy_product_and_post_to_marketplace(all_offers)
+                new_product = self.buy_product_and_post_to_marketplace(all_offers)
+                if new_product:
+                    all_offers.append(new_product)
+                # else: product already offered and restocked
         except Exception as e:
             print('error on refilling offers:', e)
 

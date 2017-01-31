@@ -75,7 +75,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return (1.0 + self.settings['fixed_margin_perc'] / 100.0) * product.price
 
     def execute_logic(self):
-        offers = self.marketplace_api.get_offers()
+        offers = self.marketplace_api.get_offers(include_empty_offers=True)
         own_offers = [offer for offer in offers if offer.merchant_id == self.merchant_id]
         own_offers_by_uid = {offer.uid: offer for offer in own_offers}
         missing_offers = settings['max_amount_of_offers'] - sum(offer.amount for offer in own_offers)
@@ -95,7 +95,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
                     offer.amount += product.amount
                     offer.signature = product.signature
                     self.marketplace_api.restock(offer.offer_id, amount=product.amount, signature=product.signature)
-
                     offer.price = self.price_product(product)
                     self.marketplace_api.update_offer(offer)
                 else:

@@ -24,7 +24,7 @@ settings = {
     'primeShipping': 1,
     'maxReqPerSec': 10,
     'outstandingProductsToBuy': 1,
-    'underprice': 0.01
+    'underprice': 0.5
     }
 
 def get_from_list_by_key(dict_list, key, value):

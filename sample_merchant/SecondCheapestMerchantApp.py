@@ -23,7 +23,7 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10,
-    'priceDifference': 0.01,
+    'priceDifference': 0.5,
     'minimumMarginPercentile': 10
 }
 

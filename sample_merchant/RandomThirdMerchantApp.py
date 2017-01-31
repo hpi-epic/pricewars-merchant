@@ -29,7 +29,7 @@ settings = {
     'debug': True,
     'max_req_per_sec': 10,
     'pricing_strategy': 'RandomThird',
-    'underprice': 0.01,
+    'underprice': 0.5,
 }
 
 
@@ -147,7 +147,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
                     self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
 
         # returns sleep value;
-        return settings['max_req_per_sec']/60
+        return 60.0 / settings['max_req_per_sec']
 
     def adjust_prices(self, offer=None, product=None, lowest_competitor_price=0,second_competitor_price=0,third_competitor_price=0):
         if not offer or not product:

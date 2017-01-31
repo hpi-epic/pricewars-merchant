@@ -16,7 +16,6 @@ merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'listedOffers': 15,
@@ -61,22 +60,8 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         self.marketplace_api.host = self.settings['marketplace_url']
         self.producer_api.host = self.settings['producerEndpoint']
 
-    def get_settings(self):
-        return self.settings
-
     def update_settings(self, new_settings):
-        def cast_to_expected_type(key, value, def_settings=self.settings):
-            if key in def_settings:
-                return type(def_settings[key])(value)
-            else:
-                return value
-
-        new_settings_casted = dict([
-                                       (key, cast_to_expected_type(key, new_settings[key]))
-                                       for key in new_settings
-                                       ])
-
-        self.settings.update(new_settings_casted)
+        MerchantBaseLogic.update_settings(self, new_settings)
         self.update_api_endpoints()
         return self.settings
 

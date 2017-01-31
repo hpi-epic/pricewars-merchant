@@ -1,4 +1,4 @@
-import argparse
+simport argparse
 import sys
 
 sys.path.append('../')
@@ -23,7 +23,6 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'maxReqPerSec': 10,
-    'outstandingProductsToBuy': 1,
     'underprice': 0.5
     }
 
@@ -97,7 +96,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
-        settings['outstandingProductsToBuy'] += 1
+        offers = self.marketplace_api.get_offers()
+        self.buy_product_and_update_offer(offers)
 
     '''
         Merchant Logic for being the cheapest
@@ -112,23 +112,18 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     def execute_logic(self):
         offers = self.marketplace_api.get_offers()
-
         missing_offers = self.settings["initialProducts"] - len(self.offers)
-        if missing_offers < 0:
-            missing_offers = 0
-        for missing_offer in range(missing_offers):
-            self.buy_product_and_update_offer(offers)
 
         for product in self.products.values():
             offer = self.offers[product.uid]
             offer = self.offers[product.uid]
-            offer.price = self.calculate_prices(offers, product.uid, product.price)
+            offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
             self.marketplace_api.update_offer(offer)
         return settings['maxReqPerSec']/10
 
-    def calculate_prices(self, marketplace_offers, product_uid, purchase_price):
+    def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
         competitive_offers = []
-        [competitive_offers.append(offer) for offer in marketplace_offers if offer.merchant_id != self.merchant_id and offer.uid == product_uid]
+        [competitive_offers.append(offer) for offer in marketplace_offers if offer.merchant_id != self.merchant_id and offer.product_id == product_id]
         cheapest_offer = 999
 
         if len(competitive_offers) == 0:
@@ -141,7 +136,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
     def add_new_product_to_offers(self, new_product, marketplace_offers):
         new_offer = Offer.from_product(new_product)
-        new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price)
+        new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price, new_product.product_id)
         new_offer.shipping_time = {
             'standard': settings['shipping'],
             'prime': settings['primeShipping']
@@ -159,7 +154,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
         offer = self.offers[product.uid]
         print('in this offer:', offer)
-        offer.price = self.calculate_prices(marketplace_offers, product.uid, product.price)
+        offer.price = self.calculate_prices(marketplace_offers, product.uid, product.price, product.product_id)
         offer.amount = product.amount
         offer.signature = product.signature
         self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
@@ -173,7 +168,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             self.add_new_product_to_offers(new_product, marketplace_offers)
 
 
-merchant_logic = MerchantSampleLogic()
+merchant_logic  = MerchantSampleLogic()
 merchant_server = MerchantServer(merchant_logic)
 app = merchant_server.app
 

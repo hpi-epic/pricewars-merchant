@@ -28,7 +28,6 @@ settings = {
     'primeShipping': 1,
     'debug': True,
     'max_req_per_sec': 10,
-    'pricing_strategy': 'RandomThird',
     'underprice': 0.5,
 }
 

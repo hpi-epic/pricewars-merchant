@@ -7,7 +7,7 @@ class MarketplaceApi(PricewarsBaseApi):
     def __init__(self, host='http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace'):
         PricewarsBaseApi.__init__(self, host=host)
 
-    def get_offers(self, include_empty_offers: False):
+    def get_offers(self, include_empty_offers=False):
         params = {}
         if include_empty_offers:
             params['include_empty_offer'] = True

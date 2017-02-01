@@ -196,7 +196,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             self.refill_offers(all_offers)
         except Exception as e:
             print('error on executing logic:', e)
-        # Return true value (calculate!)
+        # ToDo: Return true value (calculate!)
         return self.interval
 
     def sold_offer(self, offer_json):

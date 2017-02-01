@@ -12,8 +12,6 @@ from merchant_sdk.models import Offer
 merchant_token = "{{API_TOKEN}}"
 #merchant_token = 't3LvIwV9wN3pWMBdvysjtoR3zWEV1JLtMgpedLnaiqQFEbs9alsUaLXarl6s5RmQ'
 
-# TODO: Make a union with base_settings to separate some settings
-
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',

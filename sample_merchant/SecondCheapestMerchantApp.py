@@ -65,6 +65,11 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         self.update_api_endpoints()
         return self.settings
 
+    def initialize_purchase_price_map(self):
+        available_products = self.producer_api.get_products()
+        for product in available_products:
+            self.purchase_prices[product.uid] = product.price
+
     def buy_product_and_post_to_marketplace(self, all_offers):
         print('buy Product and update')
         new_product = self.buy_product()
@@ -154,7 +159,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 # Iterate over my offers based on the quality, starting with the best quality (lowest quality number)
                 for product_uid in [offer.uid for offer in sorted(self.get_own_offers(existing_offers_for_product_id),
                                                                   key=lambda offer_entry: offer_entry.quality)]:
-                    purchase_price = self.purchase_prices[product_uid]  # ToDo: Handle error!
+                    purchase_price = self.purchase_prices[product_uid]
                     target_price = self.get_second_cheapest_price(existing_offers_for_product_id, purchase_price)
                     existing_offer = self.get_own_offer_for_product_uid(existing_offers_for_product_id, product_uid)
                     self.update_offer(existing_offer, target_price)
@@ -178,6 +183,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def setup(self):
         try:
+            self.initialize_purchase_price_map()
             all_offers = self.marketplace_api.get_offers(include_empty_offers=True)
             self.refill_offers(all_offers)
         except Exception as e:

@@ -6,8 +6,8 @@ from ..models import Product
 
 class ProducerApi(PricewarsBaseApi):
 
-    def __init__(self, host='http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de'):
-        PricewarsBaseApi.__init__(self, host=host)
+    def __init__(self, host='http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de', debug=False):
+        PricewarsBaseApi.__init__(self, host=host, debug=debug)
 
     def buy_product(self, merchant_token=''):
         params = {

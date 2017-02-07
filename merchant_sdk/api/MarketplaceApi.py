@@ -4,8 +4,8 @@ from ..models import Offer, MerchantRegisterResponse
 
 class MarketplaceApi(PricewarsBaseApi):
 
-    def __init__(self, host='http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace'):
-        PricewarsBaseApi.__init__(self, host=host)
+    def __init__(self, host='http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace', debug=False):
+        PricewarsBaseApi.__init__(self, host=host, debug=debug)
 
     def get_offers(self, include_empty_offers=False):
         params = {}

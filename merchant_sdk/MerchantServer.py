@@ -16,10 +16,10 @@ def json_response(obj):
 
 class MerchantServer:
     
-    def __init__(self, merchant_logic: Type[MerchantBaseLogic]):
+    def __init__(self, merchant_logic: Type[MerchantBaseLogic], debug=False):
         self.merchant_logic = merchant_logic
         self.server_settings = {
-            'debug': False
+            'debug': debug
         }
 
         self.app = Flask(__name__)

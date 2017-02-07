@@ -2,8 +2,8 @@ from.PricewarsBaseApi import PricewarsBaseApi
 
 
 class KafkaApi(PricewarsBaseApi):
-    def __init__(self, host='http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001'):
-        PricewarsBaseApi.__init__(self, host=host, debug=False)
+    def __init__(self, host='http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001', debug=False):
+        PricewarsBaseApi.__init__(self, host=host, debug=debug)
 
     def _request_data_export(self, topic):
         r = self.request('get', 'export/data/{:s}'.format(topic))

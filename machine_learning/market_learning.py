@@ -1,21 +1,28 @@
 import numpy as np
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+from sklearn.externals import joblib
 
 import sys
+
 sys.path.append('../')
 from merchant_sdk.api import KafkaApi
 
-kafka_api = KafkaApi()
+kafka_api = KafkaApi(host='http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
 
 '''
     Input
 '''
-merchant_token = ''
+merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
+merchant_id = 'dgOqVxP1nkkncRhIoOTflL2zJ26X1r7xRNcvP6iqlIk='
 merchant_id = 'sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms='
 
 '''
     Output
 '''
+market_situation_df = None
+buy_offer_df = None
 data_products = {}
 model_products = {}
 
@@ -40,23 +47,25 @@ def match_timestamps(continuous_timestamps, point_timestamps):
     return t_combined[original_locs]['timestamp']
 
 
+def download():
+    global market_situation_df, buy_offer_df
+
+    market_situation_csv_url = kafka_api.request_csv_export_for_topic('marketSituation')
+    market_situation_df = pd.read_csv(market_situation_csv_url)
+    buy_offer_csv_url = kafka_api.request_csv_export_for_topic('buyOffer')
+    buy_offer_df = pd.read_csv(buy_offer_csv_url)
+
+
 def aggregate():
-    global data_products
     """
-    aggregate is going to download all data (csv) and transform it into a suitable data format, based on:
+    aggregate is going to transform the downloaded two csv it into a suitable data format, based on:
         $timestamp_1, $merchant_id_1, $product_id, $quality, $price
         $timestamp_1, $product_id, $sku, $price
 
         $timestamp_1, $sold_yes_no, $own_price, $own_price_rank, $cheapest_competitor, $best_competitor_quality
     :return:
     """
-    # kafka_api.download_csv_for_topic('buyOffer', 'buyOffer.csv')
-    # kafka_api.download_csv_for_topic('marketSituation', 'marketSituation.csv')
-
-    # alternative: use url from KafkaApi:
-    # request_csv_export_for_topic()
-    buy_offer_df = pd.read_csv('buyOffer.csv')
-    market_situation_df = pd.read_csv('marketSituation.csv')
+    global data_products, buy_offer_df, market_situation_df
 
     # TODO: filter market situation to only contain authorized parts
     # own_ms_view = market_situation_df[market_situation_df['triggering_merchant_id'] == merchant_id]
@@ -85,7 +94,33 @@ def aggregate():
             })
 
         data_products[product_id] = pd.DataFrame(dict_array)
-    
+        data_products[product_id].to_csv('product_{}_data.csv'.format(product_id))
+
+
+def train():
+    global data_products, model_products
+
+    for product_id in data_products:
+        data = data_products[product_id].dropna()
+        X = data[['own_price', 'own_price_rank', 'cheapest_competitor', 'best_competitor_quality']]
+        y = data['sold']
+        y[y > 1] = 1
+
+        model = LogisticRegression()
+        model.fit(X, y)
+
+        model_products[product_id] = model
+
+
+def export_models():
+    global model_products
+    for product_id in model_products:
+        model = model_products[product_id]
+        joblib.dump(model, '{}.pkl'.format(product_id))
+
 
 if __name__ == '__main__':
+    download()
     aggregate()
+    train()
+    export_models()

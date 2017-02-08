@@ -51,9 +51,9 @@ namespace :deploy do
   task :start do
     on roles :all do
       within release_path do
-      	execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install -r requirements.txt"
-        execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install mod_wsgi"
-        execute "cd #{release_path}/simple_competition_logic/ && sudo pip3 install typing"
+      	execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install -r requirements.txt"
+        execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install mod_wsgi"
+        execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install typing"
         execute "cd #{release_path}/simple_competition_logic/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' MerchantApp.py"
       end
     end

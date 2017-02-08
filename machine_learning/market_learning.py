@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -9,14 +10,15 @@ import sys
 sys.path.append('../')
 from merchant_sdk.api import KafkaApi
 
-kafka_api = KafkaApi(host='http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
-
 '''
     Input
 '''
+host = 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001'
 merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 merchant_id = 'dgOqVxP1nkkncRhIoOTflL2zJ26X1r7xRNcvP6iqlIk='
 merchant_id = 'sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms='
+
+kafka_api = KafkaApi(host=host)
 
 '''
     Output
@@ -25,6 +27,11 @@ market_situation_df = None
 buy_offer_df = None
 data_products = {}
 model_products = {}
+
+
+def make_relative_path(path):
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    return os.path.join(script_dir, path)
 
 
 def match_timestamps(continuous_timestamps, point_timestamps):
@@ -56,6 +63,21 @@ def download():
     buy_offer_df = pd.read_csv(buy_offer_csv_url)
 
 
+def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None):
+    if product_id:
+        offers_df = offers_df[offers_df['product_id'] == product_id]
+    competitors = offers_df[offers_df['merchant_id'] != merchant_id]
+    own_situation = offers_df[offers_df['merchant_id'] == merchant_id]
+    has_offer = len(own_situation) > 0
+    own_price = float(own_situation['price'].mean()) if has_offer else np.nan
+    own_price_rank = (offers_df['price'] < own_price).sum() + 1 if has_offer else np.nan
+    return {
+        'own_price': own_price,
+        'own_price_rank': own_price_rank,
+        'cheapest_competitor': competitors['price'].min(),
+        'best_competitor_quality': competitors['quality'].max(),
+    }
+
 def aggregate():
     """
     aggregate is going to transform the downloaded two csv it into a suitable data format, based on:
@@ -78,23 +100,16 @@ def aggregate():
 
         dict_array = []
         for timestamp, group in ms_df_prod.groupby('timestamp'):
-            competitors = group[group['merchant_id'] != merchant_id]
-            own_situation = group[group['merchant_id'] == merchant_id]
-            has_offer = len(own_situation) > 0
-            own_price = float(own_situation['price'].mean()) if has_offer else np.nan
-            own_price_rank = (group['price'] < own_price).sum() + 1 if has_offer else np.nan
-
-            dict_array.append({
+            features = extract_features_from_offer_snapshot(group, merchant_id)
+            features.update({
                 'timestamp': timestamp,
                 'sold': own_sales[own_sales['timestamp'] == timestamp]['amount'].sum(),
-                'own_price': own_price,
-                'own_price_rank': own_price_rank,
-                'cheapest_competitor': competitors['price'].min(),
-                'best_competitor_quality': competitors['quality'].max(),
             })
+            dict_array.append(features)
 
         data_products[product_id] = pd.DataFrame(dict_array)
-        data_products[product_id].to_csv('product_{}_data.csv'.format(product_id))
+        filename = 'data/product_{}_data.csv'.format(product_id)
+        data_products[product_id].to_csv(make_relative_path(filename))
 
 
 def train():
@@ -116,7 +131,8 @@ def export_models():
     global model_products
     for product_id in model_products:
         model = model_products[product_id]
-        joblib.dump(model, '{}.pkl'.format(product_id))
+        filename = 'models/{}.pkl'.format(product_id)
+        joblib.dump(model, make_relative_path(filename))
 
 
 if __name__ == '__main__':

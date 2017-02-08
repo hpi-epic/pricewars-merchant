@@ -19,7 +19,8 @@ class PricewarsBaseApi:
         :param kwargs:
         :return:
         """
-        print('request', self.__class__, method, resource, args, kwargs)
+        if self.debug:
+            print('request', self.__class__, method, resource, args, kwargs)
         url = urljoin(self.host, resource)
         func = {
             'options': request_session.options,

@@ -8,4 +8,4 @@ ADD . $APP_HOME
 
 RUN pip install -r merchant_sdk/requirements.txt
 
-CMD ["python", "simple_competition_logic/MerchantApp.py", "--port", "5000"]
+CMD ["bash", "-c", "'cd simple_competition_logic && python MerchantApp.py --port 5000'"]

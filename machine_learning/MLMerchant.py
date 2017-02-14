@@ -66,7 +66,6 @@ class MLMerchant(MerchantBaseLogic):
         result = {}
         for root, dirs, files in os.walk(make_relative_path(folder)):
             pkl_files = [f for f in files if f.endswith('.pkl')]
-            print('load models', pkl_files)
             for pkl_file in pkl_files:
                 complete_path = os.path.join(root, pkl_file)
                 product_id = int(pkl_file.split('.')[0])
@@ -120,11 +119,8 @@ class MLMerchant(MerchantBaseLogic):
                 features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id, product_id=product.product_id))
 
             data = pd.DataFrame(features).dropna()
-            data.to_csv('data.csv')
             data['sell_prob'] = model.predict_proba(data)[:,1]
-            data.to_csv('data.csv')
             data['expected_profit'] = data['sell_prob'] * (data['own_price'] - product.price)
-            data.to_csv('data.csv')
             return data['own_price'][data['expected_profit'].argmax()]
         except (KeyError, ValueError) as e:
             print('exception', e, '--> random price')

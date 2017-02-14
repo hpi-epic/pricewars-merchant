@@ -13,7 +13,6 @@ settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
-    'debug': True,
     'fixed_margin_perc': 20,
     'max_amount_of_offers': 50,
     'shipping': 5,

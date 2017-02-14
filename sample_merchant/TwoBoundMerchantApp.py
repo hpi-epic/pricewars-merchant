@@ -11,7 +11,6 @@ merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://',
     'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
     'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
     'priceDecrease': 0.05,
@@ -20,7 +19,6 @@ settings = {
     'maxPriceMargin': 32,
     'shipping': 1,
     'primeShipping': 1,
-    'debug': True,
     'max_req_per_sec': 10,
     'underprice': 0.5
 }

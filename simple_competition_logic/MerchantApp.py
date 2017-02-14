@@ -24,7 +24,6 @@ settings = {
     'maxPriceMargin': 32,
     'shipping': 5,
     'primeShipping': 1,
-    'debug': True,
     'max_req_per_sec': 10,
     'underprice': 0.01,
     'globalProfitMarginForFixPrice': 10

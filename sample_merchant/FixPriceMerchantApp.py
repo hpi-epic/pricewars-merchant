@@ -1,6 +1,5 @@
 import argparse
 import sys
-import os
 
 sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
@@ -12,8 +11,8 @@ merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'marketplace_url': os.getenv('PRICEWARS_MARKETPLACE_URL', 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace'),
-    'producer_url': os.getenv('PRICEWARS_PRODUCER_URL', 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de'),
+    'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
+    'producer_url': MerchantBaseLogic.get_producer_url(),
     'fixed_margin_perc': 20,
     'max_amount_of_offers': 50,
     'shipping': 5,

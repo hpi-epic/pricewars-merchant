@@ -119,6 +119,7 @@ class MLMerchant(MerchantBaseLogic):
                 features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id, product_id=product.product_id))
 
             data = pd.DataFrame(features).dropna()
+            # TODO: could be second row, currently
             data['sell_prob'] = model.predict_proba(data)[:,1]
             data['expected_profit'] = data['sell_prob'] * (data['own_price'] - product.price)
             return data['own_price'][data['expected_profit'].argmax()]

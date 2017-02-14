@@ -13,7 +13,7 @@ from merchant_sdk.models import Offer
 from machine_learning.market_learning import extract_features_from_offer_snapshot
 
 merchant_token = "{{API_TOKEN}}"
-merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
+# merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -106,28 +106,31 @@ class MLMerchant(MerchantBaseLogic):
         :param current_offers: list of offers
         :return:
         """
-        if not current_offers or product.product_id not in self.models_per_product:
-            print('random pricing')
-            return product.price * (np.random.exponential() + 0.98)
+        try:
+            model = self.models_per_product[product.product_id]
 
-        model = self.models_per_product[product.product_id]
+            offer_df = pd.DataFrame([o.to_dict() for o in current_offers])
+            offer_df = offer_df[offer_df['product_id'] == product.product_id]
+            own_offers_mask = offer_df['merchant_id'] == self.merchant_id
 
-        offer_df = pd.DataFrame([o.to_dict() for o in current_offers])
-        offer_df = offer_df[offer_df['product_id'] == product.product_id]
-        own_offers = offer_df['merchant_id'] == self.merchant_id
+            features = []
+            for potential_perc_margin in range(0, 750, 5):
+                potential_price = product.price * (1 + (potential_perc_margin / 100.0))
+                offer_df.loc[own_offers_mask, 'price'] = potential_price
+                features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id, product_id=product.product_id))
 
-        features = []
-        for potential_perc_margin in range(0, 1000, 25):
-            potential_price = product.price * (1 + (potential_perc_margin / 100.0))
-            offer_df.loc[own_offers, 'price'] = potential_price
-            features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id, product_id=product.product_id))
-
-        data = pd.DataFrame(features).dropna()
-        data['sell_prob'] = model.predict_proba(data)
-        data['expected_profit'] = data['sell_prob'] * data['own_price']
-        print('ML pricing:', data[data['expected_profit'].argmax()])
-        # TODO: use bellmann equation: boost early profit
-        return data['own_price'][data['expected_profit'].argmax()]
+            data = pd.DataFrame(features).dropna()
+            data.to_csv('data.csv')
+            data['sell_prob'] = model.predict_proba(data)[:,1]
+            data.to_csv('data.csv')
+            data['expected_profit'] = data['sell_prob'] * (data['own_price'] - product.price)
+            data.to_csv('data.csv')
+            return data['own_price'][data['expected_profit'].argmax()]
+        except (KeyError, ValueError) as e:
+            print('exception', e, '--> random price')
+            return product.price * (np.random.exponential() + 0.99)
+        except Exception as e:
+            pass
 
     def execute_logic(self):
         self.models_per_product = self.load_models_from_filesystem()
@@ -156,10 +159,11 @@ class MLMerchant(MerchantBaseLogic):
                     self.marketplace_api.update_offer(offer)
                 else:
                     offer = Offer.from_product(product)
-                    offer.price = self.price_product(product, current_offers=offers)
                     offer.prime = True
                     offer.shipping_time['standard'] = self.settings['shipping']
                     offer.shipping_time['prime'] = self.settings['primeShipping']
+                    offer.merchant_id = self.merchant_id
+                    offer.price = self.price_product(product, current_offers=offers+[offer])
                     self.marketplace_api.add_offer(offer)
             except Exception as e:
                 print('could not handle product:', product, e)

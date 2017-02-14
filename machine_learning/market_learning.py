@@ -16,7 +16,7 @@ from merchant_sdk.api import KafkaApi
 host = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
 merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 merchant_id = 'dgOqVxP1nkkncRhIoOTflL2zJ26X1r7xRNcvP6iqlIk='
-#merchant_id = 'sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms='
+# merchant_id = 'sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms='
 
 kafka_api = KafkaApi(host=host)
 
@@ -77,6 +77,7 @@ def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None
         'cheapest_competitor': competitors['price'].min(),
         'best_competitor_quality': competitors['quality'].max(),
     }
+
 
 def aggregate():
     """

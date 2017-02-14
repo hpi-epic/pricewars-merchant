@@ -17,4 +17,4 @@ RUN for folder in /merchant/*; do \
         fi \
     done
 
-CMD ["bash", "-c", "'cd simple_competition_logic && python MerchantApp.py --port 5000'"]
+CMD ["bash", "'/merchant/start-merchant.sh'"]

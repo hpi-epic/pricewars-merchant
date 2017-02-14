@@ -101,7 +101,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
         # execute queued methods
         tmp_queue = [e for e in self.execQueue]
         self.execQueue = []
-        print('queue', tmp_queue)
         for method, args in tmp_queue:
             method(*args)
 
@@ -135,15 +134,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.marketplace_api.update_offer(offer)
 
     def sold_product(self, sold_offer):
-        print('soldProduct, offer:', sold_offer)
         if sold_offer.uid in self.offers:
-            print('found in offers')
             offer = self.offers[sold_offer.uid]
             offer.amount -= sold_offer.amount_sold
             product = self.products[sold_offer.uid]
             product.amount -= sold_offer.amount_sold
-            if product.amount <= 0:
-                print('product {:d} is out of stock!'.format(product.uid))
             self.buy_product_and_update_offer()
 
     def add_new_product_to_offers(self, new_product):

@@ -13,7 +13,7 @@ from merchant_sdk.api import KafkaApi
 '''
     Input
 '''
-host = 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001'
+host = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
 merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 merchant_id = 'dgOqVxP1nkkncRhIoOTflL2zJ26X1r7xRNcvP6iqlIk='
 #merchant_id = 'sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms='

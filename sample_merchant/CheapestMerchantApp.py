@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 
 sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
@@ -14,9 +15,8 @@ merchant_token = "{{API_TOKEN}}"
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'merchant_url': 'http://172.16.56.166:5000',
-    'marketplace_url': 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace',
-    'producerEndpoint': 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de',
+    'marketplace_url': os.getenv('PRICEWARS_MARKETPLACE_URL', 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace'),
+    'producer_url': os.getenv('PRICEWARS_PRODUCER_URL', 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de'),
     'intervalMin': 1.0,
     'intervalMax': 1.0,
     'initialProducts': 5,
@@ -56,7 +56,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         '''
         PricewarsRequester.add_api_token(self.merchant_token)
         self.marketplace_api = MarketplaceApi(host=self.settings['marketplace_url'])
-        self.producer_api = ProducerApi(host=self.settings['producerEndpoint'])
+        self.producer_api = ProducerApi(host=self.settings['producer_url'])
 
         '''
             Start Logic Loop
@@ -70,7 +70,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         :return: None
         """
         self.marketplace_api.host = self.settings['marketplace_url']
-        self.producer_api.host = self.settings['producerEndpoint']
+        self.producer_api.host = self.settings['producer_url']
 
     '''
         Implement Abstract methods / Interface

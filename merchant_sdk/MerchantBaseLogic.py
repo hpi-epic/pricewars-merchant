@@ -5,6 +5,7 @@ import threading
 import time
 import hashlib
 import base64
+import os
 
 base_settings = {}
 
@@ -18,8 +19,23 @@ class MerchantBaseLogic:
         self.thread = None
         self.state = 'initialized'
 
+    @staticmethod
     def calculate_id(token):
         return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest()).decode('utf-8')
+
+    @staticmethod
+    def get_marketplace_url():
+        marketplace_url = os.getenv('PRICEWARS_MARKETPLACE_URL', 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace')
+        if not marketplace_url.startswith('http://'):
+            marketplace_url = 'http://' + marketplace_url
+        return marketplace_url
+
+    @staticmethod
+    def get_producer_url():
+        producer_url = os.getenv('PRICEWARS_PRODUCER_URL', 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de')
+        if not producer_url.startswith('http://'):
+            producer_url = 'http://' + producer_url
+        return producer_url
 
     '''
         Threading Logic

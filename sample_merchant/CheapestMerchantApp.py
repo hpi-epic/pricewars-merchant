@@ -22,7 +22,7 @@ settings = {
     'initialProducts': 5,
     'shipping': 5,
     'primeShipping': 1,
-    'maxReqPerSec': 10,
+    'maxReqPerSec': 10.0,
     'underprice': 0.5
     }
 

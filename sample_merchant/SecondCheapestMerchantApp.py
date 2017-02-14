@@ -21,7 +21,7 @@ settings = {
     'listedOffers': 15,
     'shipping': 5,
     'primeShipping': 1,
-    'max_req_per_sec': 10,
+    'max_req_per_sec': 10.0,
     'priceDifference': 0.5,
     'minimumMarginPercentile': 10
 }

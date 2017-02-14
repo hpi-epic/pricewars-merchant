@@ -18,7 +18,7 @@ settings = {
     'max_amount_of_offers': 50,
     'shipping': 5,
     'primeShipping': 1,
-    'max_req_per_sec': 10
+    'max_req_per_sec': 10.0
 }
 
 

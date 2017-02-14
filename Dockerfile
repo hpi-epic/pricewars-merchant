@@ -17,4 +17,4 @@ RUN for folder in /merchant/*; do \
         fi \
     done
 
-CMD ["start-merchant.sh"]
+CMD ["bash", "'/merchant/start-merchant.sh'"]

@@ -13,7 +13,7 @@ from merchant_sdk.models import Offer
 from machine_learning.market_learning import extract_features_from_offer_snapshot
 
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
+merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -23,7 +23,7 @@ settings = {
     'max_amount_of_offers': 15,
     'shipping': 5,
     'primeShipping': 1,
-    'max_req_per_sec': 10
+    'max_req_per_sec': 10.0
 }
 
 
@@ -66,10 +66,12 @@ class MLMerchant(MerchantBaseLogic):
         result = {}
         for root, dirs, files in os.walk(make_relative_path(folder)):
             pkl_files = [f for f in files if f.endswith('.pkl')]
+            print('load models', pkl_files)
             for pkl_file in pkl_files:
                 complete_path = os.path.join(root, pkl_file)
                 product_id = int(pkl_file.split('.')[0])
                 result[product_id] = joblib.load(complete_path)
+            break
         return result
 
     def update_api_endpoints(self):
@@ -105,6 +107,7 @@ class MLMerchant(MerchantBaseLogic):
         :return:
         """
         if not current_offers or product.product_id not in self.models_per_product:
+            print('random pricing')
             return product.price * (np.random.exponential() + 0.98)
 
         model = self.models_per_product[product.product_id]
@@ -122,6 +125,7 @@ class MLMerchant(MerchantBaseLogic):
         data = pd.DataFrame(features).dropna()
         data['sell_prob'] = model.predict_proba(data)
         data['expected_profit'] = data['sell_prob'] * data['own_price']
+        print('ML pricing:', data[data['expected_profit'].argmax()])
         # TODO: use bellmann equation: boost early profit
         return data['own_price'][data['expected_profit'].argmax()]
 

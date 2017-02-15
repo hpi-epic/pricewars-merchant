@@ -114,10 +114,10 @@ class MerchantSampleLogic(MerchantBaseLogic):
         missing_offers = self.settings["initialProducts"] - len(self.offers)
 
         for product in self.products.values():
-            offer = self.offers[product.uid]
-            offer = self.offers[product.uid]
-            offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
-            self.marketplace_api.update_offer(offer)
+            if product.uid in self.offers:
+                offer = self.offers[product.uid]
+                offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
+                self.marketplace_api.update_offer(offer)
         return settings['maxReqPerSec']/10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):

@@ -117,7 +117,6 @@ class MerchantSampleLogic(MerchantBaseLogic):
         # execute queued methods
         tmp_queue = [e for e in self.execQueue]
         self.execQueue = []
-        print('queue', tmp_queue)
         for method, args in tmp_queue:
             method(*args)
 

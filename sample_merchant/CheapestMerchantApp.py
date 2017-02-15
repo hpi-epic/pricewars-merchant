@@ -10,7 +10,7 @@ from merchant_sdk.models import Offer
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-merchant_token = 'fikFWZXKVZIlioyFt3e55BSPoWUArm4XVom2OKMusegbTfqNiVRngtDWQhfIUjoz'
+#merchant_token = 'fikFWZXKVZIlioyFt3e55BSPoWUArm4XVom2OKMusegbTfqNiVRngtDWQhfIUjoz'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),

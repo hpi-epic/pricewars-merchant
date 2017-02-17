@@ -12,6 +12,8 @@
 
 ## Merchant SDK
 
+*Note*: have a look at the samples in the merchant_sdk folder, [this one](merchant_sdk/samples/Handling\ products\ and\ offers.ipynb) shows how to use the sdk to call producer and marketplace APIs to implement product and offer handling.
+
 contains models and request APIs to ease the development of a merchant:
 
 * Models

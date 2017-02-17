@@ -50,6 +50,8 @@ python3 MerchantApp.py
 
 ## Machine Learning sample
 
+Note: look at [this notebook](merchant_sdk/samples/Working\ with\ Kafka\ data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.
+
 ### Data
 
 We recommend to use the data that is logged to Kafka (which can be raw or processed by Flink). In order to access it more easily, we built a reverse REST service (_kafka-reverse-proxy_). It provides the data by topics and is documented in the service readme.

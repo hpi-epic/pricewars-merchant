@@ -102,7 +102,6 @@ class MerchantD(MerchantBaseLogic):
         # execute queued methods
         tmp_queue = [e for e in self.execQueue]
         self.execQueue = []
-        print('queue', tmp_queue)
         for method, args in tmp_queue:
             method(*args)
 
@@ -139,7 +138,7 @@ class MerchantD(MerchantBaseLogic):
     def sold_product(self, sold_offer):
         print('soldProduct, offer:', sold_offer)
         if sold_offer.uid in self.offers:
-            print('found in offers')
+            # print('found in offers')
             offer = self.offers[sold_offer.uid]
             offer.amount -= sold_offer.amount_sold
             product = self.products[sold_offer.uid]

@@ -10,7 +10,7 @@ from merchant_sdk.models import Offer
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'Mz7J8Y8lKOFZ0fWH4MBMpG8BFCnJQXymX66feERzcgZcL6uQR6mHMuSb7GuXntKL'
+#merchant_token = 'fikFWZXKVZIlioyFt3e55BSPoWUArm4XVom2OKMusegbTfqNiVRngtDWQhfIUjoz'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -114,10 +114,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
         missing_offers = self.settings["initialProducts"] - len(self.offers)
 
         for product in self.products.values():
-            offer = self.offers[product.uid]
-            offer = self.offers[product.uid]
-            offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
-            self.marketplace_api.update_offer(offer)
+            if product.uid in self.offers:
+                offer = self.offers[product.uid]
+                offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
+                self.marketplace_api.update_offer(offer)
+            else:
+                print ('ERROR: product uid is not in offers; skipping')
         return settings['maxReqPerSec']/10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
@@ -131,7 +133,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
             if offer.price < cheapest_offer:
                 cheapest_offer = offer.price
 
-        return cheapest_offer - settings['underprice']
+        new_price = cheapest_offer - settings['underprice']
+        if new_price < purchase_price:
+            new_price = purchase_price
+
+        return new_price
 
     def add_new_product_to_offers(self, new_product, marketplace_offers):
         new_offer = Offer.from_product(new_product)

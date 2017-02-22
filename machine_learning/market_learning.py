@@ -1,24 +1,35 @@
+import argparse
+import base64
+import hashlib
 import os
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
-
-from sklearn.externals import joblib
-
 import sys
 
+import numpy as np
+import pandas as pd
+from sklearn.externals import joblib
+from sklearn.linear_model import LogisticRegression
+
+
 sys.path.append('../')
-from merchant_sdk.api import KafkaApi
+from merchant_sdk.api import KafkaApi, PricewarsRequester
 
 '''
     Input
 '''
-host = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
-merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
-merchant_id = 'dgOqVxP1nkkncRhIoOTflL2zJ26X1r7xRNcvP6iqlIk='
-# merchant_id = 'sN7jrROVR1hljMZ5OHSLG6cKTwAxKmqDO0OAtWql7Ms='
+merchant_token = None
+merchant_id = None
+kafka_api = None
 
-kafka_api = KafkaApi(host=host)
+default_host = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Machine learning on PriceWars simulation data')
+    parser.add_argument('-k', '--kafka_host', metavar='kafka_host', type=str, default=default_host,
+                        help='endpoint of kafka reverse proxy', required=True)
+    parser.add_argument('-t', '--merchant_token', metavar='merchant_token', type=str, default='',
+                        help='merchant token', required=True)
+    return parser.parse_args()
 
 '''
     Output
@@ -88,7 +99,7 @@ def aggregate():
         $timestamp_1, $sold_yes_no, $own_price, $own_price_rank, $cheapest_competitor, $best_competitor_quality
     :return:
     """
-    global data_products, buy_offer_df, market_situation_df
+    global merchant_id, data_products, buy_offer_df, market_situation_df
 
     # TODO: filter market situation to only contain authorized parts
     # own_ms_view = market_situation_df[market_situation_df['triggering_merchant_id'] == merchant_id]
@@ -137,6 +148,15 @@ def export_models():
 
 
 if __name__ == '__main__':
+    args = parse_arguments()
+
+    merchant_token = args.merchant_token
+    merchant_id = base64.b64encode(hashlib.sha256(merchant_token.encode('utf-8')).digest()).decode('utf-8')
+    PricewarsRequester.add_api_token(merchant_token)
+
+    kafka_host = args.kafka_host
+    kafka_api = KafkaApi(host=kafka_host)
+
     download()
     aggregate()
     train()

@@ -164,7 +164,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
 
     def buy_product_and_update_offer(self):
-        new_product = self.producer_api.buy_product(merchant_token=self.merchant_token)
+        new_product = self.producer_api.buy_product()
 
         if new_product.uid in self.products:
             self.restock_existing_product(new_product)

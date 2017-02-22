@@ -9,11 +9,8 @@ class ProducerApi(PricewarsBaseApi):
     def __init__(self, host='http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de', debug=False):
         PricewarsBaseApi.__init__(self, host=host, debug=debug)
 
-    def buy_product(self, merchant_token=''):
-        params = {
-            'merchant_token': merchant_token
-        }
-        r = self.request('get', 'buy', params=params)
+    def buy_product(self):
+        r = self.request('get', 'buy')
         return Product.from_dict(r.json())
 
     def get_products(self):

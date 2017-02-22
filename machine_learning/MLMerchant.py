@@ -36,8 +36,7 @@ def make_relative_path(path):
 
 
 def trigger_learning(merchant_token, kafka_host):
-    #os.system('python3 market_learning.py -t "{:s}" -k "{:s}" &'.format(merchant_token, kafka_host))
-    pass
+    os.system('python3 market_learning.py -t "{:s}" -k "{:s}" &'.format(merchant_token, kafka_host))
 
 
 class MLMerchant(MerchantBaseLogic):

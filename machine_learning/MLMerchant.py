@@ -3,6 +3,7 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+import datetime
 from sklearn.externals import joblib
 
 sys.path.append('../')
@@ -13,23 +14,29 @@ from merchant_sdk.models import Offer
 from machine_learning.market_learning import extract_features_from_offer_snapshot
 
 merchant_token = "{{API_TOKEN}}"
-# merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
+merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
     'producer_url': MerchantBaseLogic.get_producer_url(),
+    'kafka_reverse_proxy_url': MerchantBaseLogic.get_kafka_reverse_proxy_url(),
     'debug': True,
     'max_amount_of_offers': 15,
     'shipping': 5,
     'primeShipping': 1,
-    'max_req_per_sec': 10.0
+    'max_req_per_sec': 10.0,
+    'minutes_between_learnings': 30.0,
 }
 
 
 def make_relative_path(path):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     return os.path.join(script_dir, path)
+
+
+def trigger_learning(merchant_token, kafka_host):
+    os.system('python3 market_learning.py -t "{:s}" -k "{:s}" &'.format(merchant_token, kafka_host))
 
 
 class MLMerchant(MerchantBaseLogic):
@@ -55,6 +62,8 @@ class MLMerchant(MerchantBaseLogic):
             Setup ML model
         '''
         self.models_per_product = self.load_models_from_filesystem()
+        self.last_learning = datetime.datetime.now()
+        trigger_learning(self.merchant_token, settings['kafka_reverse_proxy_url'])
 
         '''
             Start Logic Loop
@@ -98,38 +107,48 @@ class MLMerchant(MerchantBaseLogic):
         Merchant Logic
     '''
 
-    def price_product(self, product, current_offers=None):
+    def price_product(self, product_or_offer, current_offers=None):
         """
         Computes a price for a product based on trained models or (exponential) random fallback
-        :param product: product object that is to be priced
+        :param product_or_offer: product object that is to be priced
         :param current_offers: list of offers
         :return:
         """
         try:
-            model = self.models_per_product[product.product_id]
+            model = self.models_per_product[product_or_offer.product_id]
 
             offer_df = pd.DataFrame([o.to_dict() for o in current_offers])
-            offer_df = offer_df[offer_df['product_id'] == product.product_id]
+            offer_df = offer_df[offer_df['product_id'] == product_or_offer.product_id]
             own_offers_mask = offer_df['merchant_id'] == self.merchant_id
 
             features = []
             for potential_perc_margin in range(0, 750, 5):
-                potential_price = product.price * (1 + (potential_perc_margin / 100.0))
+                potential_price = product_or_offer.price * (1 + (potential_perc_margin / 100.0))
                 offer_df.loc[own_offers_mask, 'price'] = potential_price
-                features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id, product_id=product.product_id))
-
+                features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id,
+                                                                     product_id=product_or_offer.product_id))
             data = pd.DataFrame(features).dropna()
             # TODO: could be second row, currently
             data['sell_prob'] = model.predict_proba(data)[:,1]
-            data['expected_profit'] = data['sell_prob'] * (data['own_price'] - product.price)
+            data['expected_profit'] = data['sell_prob'] * (data['own_price'] - product_or_offer.price)
             return data['own_price'][data['expected_profit'].argmax()]
         except (KeyError, ValueError) as e:
-            print('exception', e, '--> random price')
-            return product.price * (np.random.exponential() + 0.99)
+            if type(product_or_offer) == Offer:
+                return product_or_offer.price
+            else:
+                print('exception', e, '--> random price')
+                return product_or_offer.price * (np.random.exponential() + 0.99)
         except Exception as e:
             pass
 
+    @property
     def execute_logic(self):
+        next_training_session = self.last_learning \
+                                + datetime.timedelta(minutes=self.settings['minutes_between_learnings'])
+        if next_training_session >= datetime.datetime.now():
+            self.last_learning = datetime.datetime.now()
+            trigger_learning(self.merchant_token, self.settings['kafka_reverse_proxy_url'])
+
         self.models_per_product = self.load_models_from_filesystem()
 
         offers = self.marketplace_api.get_offers(include_empty_offers=True)
@@ -140,10 +159,14 @@ class MLMerchant(MerchantBaseLogic):
         new_products = []
         for _ in range(missing_offers):
             try:
-                prod = self.producer_api.buy_product(merchant_token=self.merchant_token)
+                prod = self.producer_api.buy_product()
                 new_products.append(prod)
             except:
                 pass
+
+        for own_offer in own_offers:
+            own_offer.price = self.price_product(own_offer, current_offers=offers)
+            self.marketplace_api.update_offer(own_offer)
 
         for product in new_products:
             try:

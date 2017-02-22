@@ -37,6 +37,13 @@ class MerchantBaseLogic:
             producer_url = 'http://' + producer_url
         return producer_url
 
+    @staticmethod
+    def get_kafka_reverse_proxy_url():
+        url = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
+        if not url.startswith('http://'):
+            url = 'http://' + url
+        return url
+
     '''
         Threading Logic
     '''

@@ -59,8 +59,8 @@ def match_timestamps(continuous_timestamps, point_timestamps):
     original_locs = t_combined['origin'] == 1
 
     t_combined.loc[original_locs, 'timestamp'] = np.nan
-    while t_combined['timestamp'].isnull().any():
-        t_combined.loc[original_locs, 'timestamp'] = t_combined['timestamp'].shift(1)[original_locs]
+    # pad: propagates last marketSituation timestamp to all following (NaN) buyOffers
+    t_combined.fillna(method='pad')
 
     return t_combined[original_locs]['timestamp']
 

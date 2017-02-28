@@ -104,7 +104,10 @@ class MerchantSampleLogic(MerchantBaseLogic):
         for method, args in tmp_queue:
             method(*args)
 
-        offers = self.marketplace_api.get_offers()
+        try:
+            offers = self.marketplace_api.get_offers()
+        except Exception as e:
+            print('error on fetching current offers:', e)
 
         missing_offers = self.settings["initialProducts"] - len(self.offers)
         for missing_offer in range(missing_offers):
@@ -131,7 +134,10 @@ class MerchantSampleLogic(MerchantBaseLogic):
         if price < min_price:
             price = max_price
         offer.price = price
-        self.marketplace_api.update_offer(offer)
+        try:
+            self.marketplace_api.update_offer(offer)
+        except Exception as e:
+            print('error on updating an offer:', e)
 
     def sold_product(self, sold_offer):
         if sold_offer.uid in self.offers:
@@ -150,8 +156,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         }
         new_offer.prime = True
         self.products[new_product.uid] = new_product
-        new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
-        self.offers[new_product.uid] = new_offer
+        try:
+            new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
+            self.offers[new_product.uid] = new_offer
+        except Exception as e:
+            print('error on adding a new offer:', e)
 
     def restock_existing_product(self, new_product):
         product = self.products[new_product.uid]
@@ -161,7 +170,10 @@ class MerchantSampleLogic(MerchantBaseLogic):
         offer = self.offers[product.uid]
         offer.amount = product.amount
         offer.signature = product.signature
-        self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+        try:
+            self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+        except Exception as e:
+            print('error on restocking an offer:', e)
 
     def buy_product_and_update_offer(self):
         new_product = self.producer_api.buy_product()

@@ -113,7 +113,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         for product in self.products.values():
             competitor_offers = []
             for offer in offers:
-                if offer.merchant_id != self.merchant_id and offer.uid == product.uid:
+                if offer.merchant_id != self.merchant_id and offer.id == product.id:
                     competitor_offers.append(offer.price)
             if len(competitor_offers) > 0:
                 offer = self.offers[product.uid]

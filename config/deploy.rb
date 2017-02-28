@@ -51,7 +51,8 @@ namespace :deploy do
   task :start do
     on roles :all do
       within release_path do
-      	execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install -r requirements.txt"
+        execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install -r requirements.txt"
+        execute "cd #{release_path}/machine_learning/ && sudo pip3 install -r requirements.txt"
         execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install mod_wsgi"
         execute "cd #{release_path}/merchant_sdk/ && sudo pip3 install typing"
         execute "cd #{release_path}/simple_competition_logic/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' MerchantApp.py"
@@ -82,6 +83,14 @@ namespace :deploy do
       end
     end
   end
+  task :activate_merchant_d do
+    on roles :all do
+      within release_path do
+        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' TwoBoundMerchantApp.py"
+        execute "cp #{release_path}/sample_merchant/TwoBoundMerchantApp.py #{release_path}/simple_competition_logic/MerchantApp.py"
+      end
+    end
+  end
   task :activate_merchant_e do
     on roles :all do
       within release_path do
@@ -90,11 +99,12 @@ namespace :deploy do
       end
     end
   end
-  task :activate_merchant_d do
+  task :activate_merchant_f do
     on roles :all do
       within release_path do
-        execute "cd #{release_path}/sample_merchant/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' TwoBoundMerchantApp.py"
-        execute "cp #{release_path}/sample_merchant/TwoBoundMerchantApp.py #{release_path}/simple_competition_logic/MerchantApp.py"
+        execute "cd #{release_path}/machine_learning/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' MLMerchant.py"
+        execute "cp #{release_path}/machine_learning/MLMerchant.py #{release_path}/simple_competition_logic/MerchantApp.py"
+        execute "cp -Rf #{release_path}/machine_learning/* #{release_path}/simple_competition_logic"
       end
     end
   end

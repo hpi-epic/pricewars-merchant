@@ -120,23 +120,26 @@ class MerchantSampleLogic(MerchantBaseLogic):
         for method, args in tmp_queue:
             method(*args)
 
-        offers = self.marketplace_api.get_offers()
+        try:
+            offers = self.marketplace_api.get_offers()
 
-        for product in self.products.values():
-            competitor_offers = []
-            for offer in offers:
-                if offer.merchant_id != self.merchant_id and offer.product_id == product.product_id:
-                    competitor_offers.append(offer.price)
-            offer = self.offers[product.uid]
-            if len(competitor_offers) >0:
-                competitor_offers.sort()
-                if len(competitor_offers) > 2:
-                    self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1], third_competitor_price=competitor_offers[2])
-                elif len(competitor_offers) > 1:
-                    self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1],third_competitor_price=0)
-                else:
-                    self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
+            for product in self.products.values():
+                competitor_offers = []
+                for offer in offers:
+                    if offer.merchant_id != self.merchant_id and offer.product_id == product.product_id:
+                        competitor_offers.append(offer.price)
+                offer = self.offers[product.uid]
+                if len(competitor_offers) >0:
+                    competitor_offers.sort()
+                    if len(competitor_offers) > 2:
+                        self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1], third_competitor_price=competitor_offers[2])
+                    elif len(competitor_offers) > 1:
+                        self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1],third_competitor_price=0)
+                    else:
+                        self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
 
+        except Exception as e:
+            print('error on executing logic:', e)
         # returns sleep value;
         return 60.0 / settings['max_req_per_sec']
 
@@ -156,7 +159,10 @@ class MerchantSampleLogic(MerchantBaseLogic):
         if price < min_price:
             price = max_price
         offer.price = price
-        self.marketplace_api.update_offer(offer)
+        try:
+            self.marketplace_api.update_offer(offer)
+        except Exception as e:
+            print('error on updating offer:', e)
 
     def sold_product(self, sold_offer):
         print('soldProduct, offer:', sold_offer)
@@ -192,16 +198,22 @@ class MerchantSampleLogic(MerchantBaseLogic):
         print('in this offer:', offer)
         offer.amount = product.amount
         offer.signature = product.signature
-        self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+        try:
+            self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+        except Exception as e:
+            print('error on restocking offer:', e)
 
     def buy_product_and_update_offer(self):
         print('buy Product and update')
-        new_product = self.producer_api.buy_product()
+        try:
+            new_product = self.producer_api.buy_product()
 
-        if new_product.uid in self.products:
-            self.restock_existing_product(new_product)
-        else:
-            self.add_new_product_to_offers(new_product)
+            if new_product.uid in self.products:
+                self.restock_existing_product(new_product)
+            else:
+                self.add_new_product_to_offers(new_product)
+        except Exception as e:
+            print('error on buying a new product:', e)
 
 
 merchant_logic = MerchantSampleLogic()

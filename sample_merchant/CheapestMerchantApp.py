@@ -95,8 +95,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
-        offers = self.marketplace_api.get_offers()
-        self.buy_product_and_update_offer(offers)
+        try:
+            offers = self.marketplace_api.get_offers()
+            self.buy_product_and_update_offer(offers)
+        except Exception as e:
+            print('error on handling a sold offer:', e)
 
     '''
         Merchant Logic for being the cheapest
@@ -110,16 +113,22 @@ class MerchantSampleLogic(MerchantBaseLogic):
             print('error on setup:', e)
 
     def execute_logic(self):
-        offers = self.marketplace_api.get_offers()
-        missing_offers = self.settings["initialProducts"] - len(self.offers)
+        try:
+            offers = self.marketplace_api.get_offers()
+            missing_offers = self.settings["initialProducts"] - len(self.offers)
 
-        for product in self.products.values():
-            if product.uid in self.offers:
-                offer = self.offers[product.uid]
-                offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
-                self.marketplace_api.update_offer(offer)
-            else:
-                print ('ERROR: product uid is not in offers; skipping')
+            for product in self.products.values():
+                if product.uid in self.offers:
+                    offer = self.offers[product.uid]
+                    offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
+                    try:
+                        self.marketplace_api.update_offer(offer)
+                    except Exception as e:
+                        print('error on updating an offer:', e)
+                else:
+                    print ('ERROR: product uid is not in offers; skipping')
+        except Exception as e:
+            print('error on executing the logic:', e)
         return settings['maxReqPerSec']/10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
@@ -148,8 +157,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         }
         new_offer.prime = True
         self.products[new_product.uid] = new_product
-        new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
-        self.offers[new_product.uid] = new_offer
+        try:
+            new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
+            self.offers[new_product.uid] = new_offer
+        except Exception as e:
+            print('error on adding a new offer:', e)
 
     def restock_existing_product(self, new_product, marketplace_offers):
         print('restock product', new_product)
@@ -162,15 +174,21 @@ class MerchantSampleLogic(MerchantBaseLogic):
         offer.price = self.calculate_prices(marketplace_offers, product.uid, product.price, product.product_id)
         offer.amount = product.amount
         offer.signature = product.signature
-        self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+        try:
+            self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+        except Exception as e:
+            print('error on restocking an offer:', e)
 
     def buy_product_and_update_offer(self, marketplace_offers):
-        new_product = self.producer_api.buy_product()
+        try:
+            new_product = self.producer_api.buy_product()
 
-        if new_product.uid in self.products:
-            self.restock_existing_product(new_product, marketplace_offers)
-        else:
-            self.add_new_product_to_offers(new_product, marketplace_offers)
+            if new_product.uid in self.products:
+                self.restock_existing_product(new_product, marketplace_offers)
+            else:
+                self.add_new_product_to_offers(new_product, marketplace_offers)
+        except Exception as e:
+            print('error on buying a new product:', e)
 
 
 merchant_logic  = MerchantSampleLogic()

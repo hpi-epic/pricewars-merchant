@@ -151,7 +151,10 @@ class MLMerchant(MerchantBaseLogic):
 
         self.models_per_product = self.load_models_from_filesystem()
 
-        offers = self.marketplace_api.get_offers(include_empty_offers=True)
+        try:
+            offers = self.marketplace_api.get_offers(include_empty_offers=True)
+        except Exception as e:
+            print('error on getting offers:', e)
         own_offers = [offer for offer in offers if offer.merchant_id == self.merchant_id]
         own_offers_by_uid = {offer.uid: offer for offer in own_offers}
         missing_offers = settings['max_amount_of_offers'] - sum(offer.amount for offer in own_offers)
@@ -166,7 +169,10 @@ class MLMerchant(MerchantBaseLogic):
 
         for own_offer in own_offers:
             own_offer.price = self.price_product(own_offer, current_offers=offers)
-            self.marketplace_api.update_offer(own_offer)
+            try:
+                self.marketplace_api.update_offer(own_offer)
+            except Exception as e:
+                print('error on updating offer:', e)
 
         for product in new_products:
             try:
@@ -174,9 +180,15 @@ class MLMerchant(MerchantBaseLogic):
                     offer = own_offers_by_uid[product.uid]
                     offer.amount += product.amount
                     offer.signature = product.signature
-                    self.marketplace_api.restock(offer.offer_id, amount=product.amount, signature=product.signature)
+                    try:
+                        self.marketplace_api.restock(offer.offer_id, amount=product.amount, signature=product.signature)
+                    except Exception as e:
+                        print('error on restocking an offer:', e)
                     offer.price = self.price_product(product, current_offers=offers)
-                    self.marketplace_api.update_offer(offer)
+                    try:
+                        self.marketplace_api.update_offer(offer)
+                    except Exception as e:
+                        print('error on updating an offer:', e)
                 else:
                     offer = Offer.from_product(product)
                     offer.prime = True
@@ -184,7 +196,10 @@ class MLMerchant(MerchantBaseLogic):
                     offer.shipping_time['prime'] = self.settings['primeShipping']
                     offer.merchant_id = self.merchant_id
                     offer.price = self.price_product(product, current_offers=offers+[offer])
-                    self.marketplace_api.add_offer(offer)
+                    try:
+                        self.marketplace_api.add_offer(offer)
+                    except Exception as e:
+                        print('error on adding an offer to the marketplace:', e)
             except Exception as e:
                 print('could not handle product:', product, e)
 

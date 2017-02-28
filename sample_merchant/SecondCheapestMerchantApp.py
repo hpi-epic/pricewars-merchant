@@ -66,7 +66,10 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         return self.settings
 
     def initialize_purchase_price_map(self):
-        available_products = self.producer_api.get_products()
+        try:
+            available_products = self.producer_api.get_products()
+        except Exception as e:
+            print('error on getting products from the producer:', e)
         for product in available_products:
             self.purchase_prices[product.uid] = product.price
 
@@ -79,10 +82,13 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
         return self.post_offer(new_product, target_price, existing_offer)
 
     def buy_product(self):
-        new_product = self.producer_api.buy_product()
-        if new_product.uid not in self.purchase_prices:
-            self.purchase_prices[new_product.uid] = new_product.price
-        return new_product
+        try:
+            new_product = self.producer_api.buy_product()
+            if new_product.uid not in self.purchase_prices:
+                self.purchase_prices[new_product.uid] = new_product.price
+            return new_product
+        except Exception as e:
+            print('error on buying a new product:', e)
 
     def get_existing_offers_for_product_id_from_marketplace(self, all_offers, product_id):
         product_id_offers = [offer for offer in all_offers if offer.product_id == product_id]
@@ -123,15 +129,21 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             'prime': settings['primeShipping']
         }
         new_offer.prime = True
-        if existing_offer is None:
-            return self.marketplace_api.add_offer(new_offer)
-        else:
-            self.marketplace_api.restock(existing_offer.offer_id, product.amount, product.signature)
-            return None
+        try:
+            if existing_offer is None:
+                return self.marketplace_api.add_offer(new_offer)
+            else:
+                self.marketplace_api.restock(existing_offer.offer_id, product.amount, product.signature)
+                return None
+        except Exception as e:
+            print('error on posting an offer:', e)
 
     def update_offer(self, own_offer, target_price):
         own_offer.price = target_price
-        self.marketplace_api.update_offer(own_offer)
+        try:
+            self.marketplace_api.update_offer(own_offer)
+        except Exception as e:
+            print('error on updating an offer:', e)
 
     def get_own_offers(self, all_offers):
         return [offer for offer in all_offers if offer.merchant_id == self.merchant_id]
@@ -169,7 +181,10 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def refill_offers(self, all_offers=None):
         if not all_offers:
-            all_offers = self.marketplace_api.get_offers()
+            try:
+                all_offers = self.marketplace_api.get_offers(include_empty_offers=True)
+            except Exception as e:
+                print('error on fetching offers from the marketplace:', e)
 
         existing_offers = self.get_amount_of_own_offers(all_offers)
         try:

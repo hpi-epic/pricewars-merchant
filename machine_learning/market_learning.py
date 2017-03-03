@@ -16,7 +16,7 @@ from merchant_sdk.api import KafkaApi, PricewarsRequester
 '''
     Input
 '''
-merchant_token = None
+merchant_token = 'bTEXsl4wJJomq5h1BaDEWCstSPbcGmIqFWO8IS5bltOcy6eBgrOD3H7Vgh8wUQnk'
 merchant_id = None
 kafka_api = None
 
@@ -27,7 +27,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Machine learning on PriceWars simulation data')
     parser.add_argument('-k', '--kafka_host', metavar='kafka_host', type=str, default=default_host,
                         help='endpoint of kafka reverse proxy', required=True)
-    parser.add_argument('-t', '--merchant_token', metavar='merchant_token', type=str, default='',
+    parser.add_argument('-t', '--merchant_token', metavar='merchant_token', type=str, default=merchant_token,
                         help='merchant token', required=True)
     return parser.parse_args()
 
@@ -73,6 +73,11 @@ def download():
     buy_offer_csv_url = kafka_api.request_csv_export_for_topic('buyOffer')
     buy_offer_df = pd.read_csv(buy_offer_csv_url)
 
+def load_offline():
+    global market_situation_df, buy_offer_df
+    market_situation_df = pd.read_csv('marketSituation.csv')
+    buy_offer_df = pd.read_csv('buyOffer.csv')
+
 
 def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None):
     if product_id:
@@ -104,7 +109,8 @@ def aggregate():
     # TODO: filter market situation to only contain authorized parts
     # own_ms_view = market_situation_df[market_situation_df['triggering_merchant_id'] == merchant_id]
     own_ms_view = market_situation_df
-    own_sales = buy_offer_df[buy_offer_df['merchant_id'] == merchant_id]
+    # own_sales = buy_offer_df[buy_offer_df['merchant_id'] == merchant_id]
+    own_sales = buy_offer_df
     own_sales.loc[:, 'timestamp'] = match_timestamps(own_ms_view['timestamp'], own_sales['timestamp'])
 
     for product_id in np.unique(own_ms_view['product_id']):
@@ -158,6 +164,7 @@ if __name__ == '__main__':
     kafka_api = KafkaApi(host=kafka_host)
 
     download()
+    # load_offline()
     aggregate()
     train()
     export_models()

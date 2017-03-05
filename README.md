@@ -54,19 +54,9 @@ Note: look at [this notebook](merchant_sdk/samples/Working\ with\ Kafka\ data.ip
 
 ### Data
 
-We recommend to use the data that is logged to Kafka (which can be raw or processed by Flink). In order to access it more easily, we built a reverse REST service (_kafka-reverse-proxy_). It provides the data by topics and is documented in the service readme.
+We recommend to use the data that is logged to Kafka (which can be raw or processed by Flink). In order to access it more easily, we built a reverse REST service (_kafka-reverse-proxy_). It provides the data by topics and you should have a look at [this documentation](https://github.com/hpi-epic/pricewars-kafka-reverse-proxy#filtered-data-view-as-csv).
 
-To estimate the demand and compute a good price, we join the sales of a product (topic: *buyOffer*) and periodical snapshots of the available offers on the marketplace (topic: *marketSituation*).
-
-#### fetch data using the Management UI
-
-The management UI provides simple access to download the csv for a topic [here](http://vm-mpws2016hp1-02.eaalab.hpi.uni-potsdam.de/index.html#/data/export).
-
-Note: exporting the data can take a while, depending on the topic and amount of logs in that topic.
-
-![request csv](docs/csv_request.png)
-
-![download csv](docs/csv_download.png)
+To estimate the demand and compute a good price, we join the sales of a product (topic: *buyOffer*) and periodical snapshots of the available offers on the marketplace (topic: *marketSituation*). FYI: logging and data format is [documented here](https://github.com/hpi-epic/pricewars-marketplace#logging).
 
 #### fetch data using the python sdk
 
@@ -82,3 +72,14 @@ kafka_api = KafkaApi(host=host)
 market_situation_csv_url = kafka_api.request_csv_export_for_topic('marketSituation')
 market_situation_df = pd.read_csv(market_situation_csv_url)
 ```
+
+
+#### fetch data using the Management UI
+
+The management UI provides simple access to download the csv for a topic [here](http://vm-mpws2016hp1-02.eaalab.hpi.uni-potsdam.de/index.html#/data/export).
+
+Note: exporting the data can take a while, depending on the topic and amount of logs in that topic.
+
+![request csv](docs/csv_request.png)
+
+![download csv](docs/csv_download.png)

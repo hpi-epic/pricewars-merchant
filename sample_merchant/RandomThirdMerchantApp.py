@@ -124,19 +124,20 @@ class MerchantSampleLogic(MerchantBaseLogic):
             offers = self.marketplace_api.get_offers()
 
             for product in self.products.values():
-                competitor_offers = []
-                for offer in offers:
-                    if offer.merchant_id != self.merchant_id and offer.product_id == product.product_id:
-                        competitor_offers.append(offer.price)
-                offer = self.offers[product.uid]
-                if len(competitor_offers) >0:
-                    competitor_offers.sort()
-                    if len(competitor_offers) > 2:
-                        self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1], third_competitor_price=competitor_offers[2])
-                    elif len(competitor_offers) > 1:
-                        self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1],third_competitor_price=0)
-                    else:
-                        self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
+                if product['amount'] > 0:
+                    competitor_offers = []
+                    for offer in offers:
+                        if offer.merchant_id != self.merchant_id and offer.product_id == product.product_id:
+                            competitor_offers.append(offer.price)
+                    offer = self.offers[product.uid]
+                    if len(competitor_offers) >0:
+                        competitor_offers.sort()
+                        if len(competitor_offers) > 2:
+                            self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1], third_competitor_price=competitor_offers[2])
+                        elif len(competitor_offers) > 1:
+                            self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=competitor_offers[1],third_competitor_price=0)
+                        else:
+                            self.adjust_prices(offer=offer, product=product, lowest_competitor_price=competitor_offers[0], second_competitor_price=0, third_competitor_price=0)
 
         except Exception as e:
             print('error on executing logic:', e)

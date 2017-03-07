@@ -124,7 +124,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             offers = self.marketplace_api.get_offers()
 
             for product in self.products.values():
-                if product['amount'] > 0:
+                if product.amount > 0:
                     competitor_offers = []
                     for offer in offers:
                         if offer.merchant_id != self.merchant_id and offer.product_id == product.product_id:

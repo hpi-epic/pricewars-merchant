@@ -109,7 +109,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
                 second_cheapest_offer = offer.price
 
         target_price = second_cheapest_offer - self.settings['priceDifference']
-        if second_cheapest_offer < maximum_price and target_price >= cheapest_offer:
+        if second_cheapest_offer <= maximum_price and target_price >= cheapest_offer:
             second_cheapest_offer = target_price
 
         if second_cheapest_offer < minimum_price:

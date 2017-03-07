@@ -246,6 +246,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PriceWars Merchant')
     parser.add_argument('--port', type=int,
                         help='port to bind flask App to')
+
     args = parser.parse_args()
 
     app.run(host='0.0.0.0', port=args.port)

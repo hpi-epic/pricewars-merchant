@@ -139,11 +139,12 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             print('error on posting an offer:', e)
 
     def update_offer(self, own_offer, target_price):
-        own_offer.price = target_price
-        try:
-            self.marketplace_api.update_offer(own_offer)
-        except Exception as e:
-            print('error on updating an offer:', e)
+        if own_offer.price != target_price:
+            own_offer.price = target_price
+            try:
+                self.marketplace_api.update_offer(own_offer)
+            except Exception as e:
+                print('error on updating an offer:', e)
 
     def get_own_offers(self, all_offers):
         return [offer for offer in all_offers if offer.merchant_id == self.merchant_id]

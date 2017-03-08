@@ -159,11 +159,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
         price = min(price, max_price)
         if price < min_price:
             price = max_price
-        offer.price = price
-        try:
-            self.marketplace_api.update_offer(offer)
-        except Exception as e:
-            print('error on updating offer:', e)
+        if price != offer.price:
+            offer.price = price
+            try:
+                self.marketplace_api.update_offer(offer)
+            except Exception as e:
+                print('error on updating offer:', e)
 
     def sold_product(self, sold_offer):
         print('soldProduct, offer:', sold_offer)

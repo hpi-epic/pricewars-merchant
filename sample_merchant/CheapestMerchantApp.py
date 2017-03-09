@@ -120,7 +120,13 @@ class MerchantSampleLogic(MerchantBaseLogic):
             for product in self.products.values():
                 if product.uid in self.offers:
                     offer = self.offers[product.uid]
-                    offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
+                    new_price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
+                    try:
+                        if offer.price != new_price:
+                            offer.price = new_price
+                    except TypeError:
+                        offer.price = new_price
+
                     try:
                         self.marketplace_api.update_offer(offer)
                     except Exception as e:

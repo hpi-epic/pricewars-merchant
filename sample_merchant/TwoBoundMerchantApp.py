@@ -91,16 +91,10 @@ class MerchantD(MerchantBaseLogic):
 
     def sold_offer(self, offer):
         print("sold offer")
-       #self.execQueue.append((self.sold_product, [offer]))
+        self.execQueue.append((self.sold_product, [offer]))
 
     def buy_missing_products(self):
-        try:
-            offers = self.marketplace_api.get_offers(include_empty_offers=True)
-        except Exception as e:
-            print('error on getting offers:', e)
-        own_offers = [offer for offer in offers if offer.merchant_id == self.merchant_id]
-        missing_offers = settings['max_amount_of_offers'] - sum(offer.amount for offer in own_offers)
-        for i in range(self.settings["initialProducts"] - missing_offers):
+        for i in range(self.settings["initialProducts"] - sum(offer.amount for offer in self.offers.values())):
             self.buy_product_and_update_offer()
 
     def setup(self):

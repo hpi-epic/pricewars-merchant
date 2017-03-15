@@ -122,8 +122,8 @@ class MLMerchant(MerchantBaseLogic):
             own_offers_mask = offer_df['merchant_id'] == self.merchant_id
 
             features = []
-            for potential_perc_margin in range(0, 750, 5):
-                potential_price = product_or_offer.price * (1 + (potential_perc_margin / 100.0))
+            for potential_price_candidate in range(0.5, 100, 0.5):
+                potential_price = product_or_offer.price + potential_price_candidate
                 offer_df.loc[own_offers_mask, 'price'] = potential_price
                 features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id,
                                                                      product_id=product_or_offer.product_id))

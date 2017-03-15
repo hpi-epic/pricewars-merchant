@@ -1,5 +1,19 @@
 # Merchant
 
+This repository contains the merchant-component of the Pricewars-simulation. The merchant represents a vendor trying to sell their products at the highest possible profit at the marketplace. As such, they also represent a certain pricing strategy that is to be tested against other pricing strategies. Such a pricing strategy can be either very simple and rule-driven, such as "always be 10 cents cheaper than your competitors" or data-driven and use machine learning strategies. 
+
+This repository contains multiple sample merchants that each implement one of the following strategies:
+* Cheapest
+* Second Cheapest
+* Random Third (randomly chooses either the first, second or third position in the price ranking)
+* Two Bound (has a minimum and maximum profit margin and keeps decreasing the price to maintain the 1st position in the price rank until the minimum bound is reached - then they set the price back to the maximum margin) 
+* Fix Price
+* Maximize Highest Expected Profit (ie a data-driven, machine learning merchant using logistic regression)
+
+Moreover, the repository contains an SDK to easily build arbitrary merchant behaviors yourself.
+
+The meta repository containing general information can be found [here](https://github.com/hpi-epic/masterproject-pricewars).
+
 ## Application Overview
 
 | Repo | Branch 	| Deployment to  	| Status | Description |
@@ -10,11 +24,44 @@
 | [Marketplace](https://github.com/hpi-epic/pricewars-marketplace) | master  	|  [vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de/marketplace](http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de/marketplace/offers) 	| [ ![Codeship Status for hpi-epic/pricewars-marketplace](https://app.codeship.com/projects/e9d9b3e0-88c5-0134-6167-4a60797e4d29/status?branch=master)](https://app.codeship.com/projects/184015) | Stable |
 | [Merchant](https://github.com/hpi-epic/pricewars-merchant) | master  	|  [vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de/](http://vm-mpws2016hp1-06.eaalab.hpi.uni-potsdam.de/) 	| [ ![Codeship Status for hpi-epic/pricewars-merchant](https://app.codeship.com/projects/a7d3be30-88c5-0134-ea9c-5ad89f4798f3/status?branch=master)](https://app.codeship.com/projects/184013) | Stable |
 
+## Requirements
+
+The merchants are written in Python. Ensure to have [Python](https://www.python.org/) installed and set up on your computer. 
+
+_The SDK requires a Python version of at least 3.5!_ 
+
+It is type-hinted, so using an IDE (e.g. PyCharm) is helpful.
+
+## Setup
+
+After cloning the repository, install the necessary dependencies from the _merchant_sdk/_-directory with 
+`pip install -r merchant_sdk/requirements.txt` (Linux, MacOS) resp. `python -m pip install -r requirements.txt` (Windows). 
+
+### Sample Merchants
+Once the dependencies are installed, you can run a data-driven sample merchant by executing eg:
+```
+cd sample_merchant
+python CheapestMerchantApp.py
+``` 
+
+To run the sample machine learning merchant, you need additional dependencies before running it. In the top-folder, execute:
+```
+cd machine_learning
+pip install -r requirements.txt
+python MLMerchant.py
+```
+
+## Configuration
+
+The default URLs to all components needed for the merchant are set in `MerchantBaseLogic.py` in the _merchant_sdk/_-folder from line 27 onwards. If defined, variables from the environment are used instead: `PRICEWARS_MARKETPLACE_URL`, `PRICEWARS_PRODUCER_URL` and `PRICEWARS_KAFKA_REVERSE_PROXY_URL`.
+
+## Concept
+
 ## Merchant SDK
 
-*Note*: have a look at the samples in the merchant_sdk folder, [this one](merchant_sdk/samples/Handling\ products\ and\ offers.ipynb) shows how to use the sdk to call producer and marketplace APIs to implement product and offer handling.
+*Note*: Have a look at the samples in the merchant_sdk folder, [this one](merchant_sdk/samples/Handling\ products\ and\ offers.ipynb) shows how to use the sdk to call producer and marketplace APIs to implement product and offer handling.
 
-contains models and request APIs to ease the development of a merchant:
+The SDK contains models and request APIs to ease the development of a merchant:
 
 * Models
 	* Offer
@@ -29,28 +76,9 @@ contains models and request APIs to ease the development of a merchant:
 * MerchantBaseLogic
 	* defines interface for Merchants to work with the MerchantServer
 
-## Sample Merchants
+## Machine Learning Sample Merchant
 
-### setup
-
-Get the merchant_sdk and put the folder in your python libraries or somewhere else (make sure you can import it). _The SDK requires a Python version of at least 3.5!_ It is type-hinted, so using an IDE (e.g. PyCharm) is helpful.
-
-Install all dependencies
-
-```
-pip3 install -r merchant_sdk/requirements.txt
-```
-
-then, you can run a Merchant like so:
-
-```
-cd sample_merchant
-python3 MerchantApp.py
-```
-
-## Machine Learning sample
-
-Note: look at [this notebook](merchant_sdk/samples/Working\ with\ Kafka\ data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.
+Note: Look at [this notebook](merchant_sdk/samples/Working\ with\ Kafka\ data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.
 
 ### Data
 
@@ -58,7 +86,7 @@ We recommend to use the data that is logged to Kafka (which can be raw or proces
 
 To estimate the demand and compute a good price, we join the sales of a product (topic: *buyOffer*) and periodical snapshots of the available offers on the marketplace (topic: *marketSituation*). FYI: logging and data format is [documented here](https://github.com/hpi-epic/pricewars-marketplace#logging).
 
-#### fetch data using the python sdk
+#### fetch data using the merchant-sdk
 
 The merchant_sdk also provides nice methods to download the data. The returned URL to the csv can be used with pandas to directly download a csv and turn it into a DataFrame. [This](machine_learning/market_learning.py) is a good example to learn a model.
 
@@ -72,7 +100,6 @@ kafka_api = KafkaApi(host=host)
 market_situation_csv_url = kafka_api.request_csv_export_for_topic('marketSituation')
 market_situation_df = pd.read_csv(market_situation_csv_url)
 ```
-
 
 #### fetch data using the Management UI
 

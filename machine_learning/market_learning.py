@@ -60,10 +60,9 @@ def match_timestamps(continuous_timestamps, point_timestamps):
 
     t_combined.loc[original_locs, 'timestamp'] = np.nan
     # pad: propagates last marketSituation timestamp to all following (NaN) buyOffers
-    t_combined.fillna(method='pad')
+    t_padded = t_combined.fillna(method='pad')
 
-    return t_combined[original_locs]['timestamp']
-
+    return t_padded[original_locs]['timestamp']
 
 def download():
     global market_situation_df, buy_offer_df
@@ -78,20 +77,36 @@ def load_offline():
     market_situation_df = pd.read_csv('marketSituation.csv')
     buy_offer_df = pd.read_csv('buyOffer.csv')
 
-
 def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None):
     if product_id:
         offers_df = offers_df[offers_df['product_id'] == product_id]
     competitors = offers_df[offers_df['merchant_id'] != merchant_id]
     own_situation = offers_df[offers_df['merchant_id'] == merchant_id]
     has_offer = len(own_situation) > 0
-    own_price = float(own_situation['price'].mean()) if has_offer else np.nan
-    own_price_rank = (offers_df['price'] < own_price).sum() + 1 if has_offer else np.nan
+    has_competitors = len(competitors) > 0
+
+    if (has_offer):
+        own_offer = own_situation.sort_values(by='price').iloc[0]
+        own_price = own_offer['price']
+        own_quality = own_offer['quality']
+        price_rank = (offers_df['price'] < own_price).sum() + 1
+        distance_to_cheapest_competitor = float(own_price - competitors['price'].min()) if has_competitors else np.nan
+        quality_rank = (offers_df['quality'] < own_quality).sum() + 1
+    else:
+        own_price = np.nan
+        price_rank = np.nan
+        distance_to_cheapest_competitor = np.nan
+        quality_rank = np.nan
+    
+    amount_of_all_competitors = len(competitors)
+    average_price_on_market = offers_df['price'].mean()
     return {
         'own_price': own_price,
-        'own_price_rank': own_price_rank,
-        'cheapest_competitor': competitors['price'].min(),
-        'best_competitor_quality': competitors['quality'].max(),
+        'price_rank': price_rank,
+        'distance_to_cheapest_competitor': distance_to_cheapest_competitor,
+        'quality_rank': quality_rank,
+        'amount_of_all_competitors': amount_of_all_competitors,
+        'average_price_on_market': average_price_on_market
     }
 
 
@@ -106,11 +121,8 @@ def aggregate():
     """
     global merchant_id, data_products, buy_offer_df, market_situation_df
 
-    # TODO: filter market situation to only contain authorized parts
-    # own_ms_view = market_situation_df[market_situation_df['triggering_merchant_id'] == merchant_id]
     own_ms_view = market_situation_df
-    # own_sales = buy_offer_df[buy_offer_df['merchant_id'] == merchant_id]
-    own_sales = buy_offer_df
+    own_sales = buy_offer_df[buy_offer_df['http_code'] == 200].copy()
     own_sales.loc[:, 'timestamp'] = match_timestamps(own_ms_view['timestamp'], own_sales['timestamp'])
 
     for product_id in np.unique(own_ms_view['product_id']):
@@ -129,14 +141,13 @@ def aggregate():
         filename = 'data/product_{}_data.csv'.format(product_id)
         data_products[product_id].to_csv(make_relative_path(filename))
 
-
 def train():
     global data_products, model_products
 
     for product_id in data_products:
         data = data_products[product_id].dropna()
-        X = data[['own_price', 'own_price_rank', 'cheapest_competitor', 'best_competitor_quality']]
-        y = data['sold']
+        X = data[['price_rank', 'distance_to_cheapest_competitor', 'quality_rank','amount_of_all_competitors','average_price_on_market']]
+        y = data['sold'].copy()
         y[y > 1] = 1
 
         model = LogisticRegression()

@@ -1,14 +1,20 @@
 # Merchant
 
-This repository contains the merchant-component of the Pricewars-simulation. The merchant represents a vendor trying to sell their products at the highest possible profit at the marketplace. As such, they also represent a certain pricing strategy that is to be tested against other pricing strategies. Such a pricing strategy can be either very simple and rule-driven, such as "always be 10 cents cheaper than your competitors" or data-driven and use machine learning strategies. 
+This repository contains the merchant-component of the Pricewars-simulation. The merchant represents a vendor trying to sell their products at the highest possible profit at the marketplace. As such, they also represent a certain pricing strategy that is to be tested against other pricing strategies. Such a pricing strategy can be either very simple and rule-driven, such as "always be 10 cents cheaper than your competitors" or data-driven and use machine learning strategies.
 
 This repository contains multiple sample merchants that each implement one of the following strategies:
+
 * Cheapest
 * Second Cheapest
-* Random Third (randomly chooses either the first, second or third position in the price ranking)
-* Two Bound (has a minimum and maximum profit margin and keeps decreasing the price to maintain the 1st position in the price rank until the minimum bound is reached - then they set the price back to the maximum margin) 
+* Random Thir
+  * randomly chooses either the first, second or third position in the price ranking
+* Two Bound 
+  * has a minimum and maximum profit margin
+  * keeps decreasing the price to maintain the 1st position in the price rank until the minimum bound is reached
+  * then set the price back to the maximum margin
 * Fix Price
-* Maximize Highest Expected Profit (ie a data-driven, machine learning merchant using logistic regression)
+* Maximize Highest Expected Profit
+  * i.e. a data-driven, machine learning merchant using logistic regression
 
 Moreover, the repository contains an SDK to easily build arbitrary merchant behaviors yourself.
 
@@ -34,17 +40,19 @@ It is type-hinted, so using an IDE (e.g. PyCharm) is helpful.
 
 ## Setup
 
-After cloning the repository, install the necessary dependencies from the _merchant_sdk/_-directory with 
-`pip install -r merchant_sdk/requirements.txt` (Linux, MacOS) resp. `python -m pip install -r requirements.txt` (Windows). 
+After cloning the repository, install the necessary dependencies from the `merchant_sdk/` directory with 
+`pip install -r requirements.txt` (Linux, MacOS) resp. `python -m pip install -r requirements.txt` (Windows). 
 
 ### Sample Merchants
 Once the dependencies are installed, you can run a data-driven sample merchant by executing eg:
+
 ```
 cd sample_merchant
 python CheapestMerchantApp.py
 ``` 
 
 To run the sample machine learning merchant, you need additional dependencies before running it. In the top-folder, execute:
+
 ```
 cd machine_learning
 pip install -r requirements.txt
@@ -56,6 +64,15 @@ python MLMerchant.py
 The default URLs to all components needed for the merchant are set in `MerchantBaseLogic.py` in the _merchant_sdk/_-folder from line 27 onwards. If defined, variables from the environment are used instead: `PRICEWARS_MARKETPLACE_URL`, `PRICEWARS_PRODUCER_URL` and `PRICEWARS_KAFKA_REVERSE_PROXY_URL`.
 
 ## Concept
+
+The merchant sells _products_ to _consumers_ on the _marketplace_. The interface to do so, is derived from real world online marketplaces. Thus, a merchant:
+
+* has to **register** at the marketplace, which will grant him an identification and authorization token. This token can be mandatory for certain actions and is also used to keep track of all earnings and expenses of a merchant (e.g. in logs).
+* can **buy products** form the producer. These are randomly chosen, so the merchant cannot actively choose products. This is due to the fact, that merchants should focus on pricing.
+* can **put** products as **offers** on the marketplace, increase amount of products of an offer (**restock**) and reprice offers (requests are limited)
+* needs to accept notifications about **sales** (as http request on `/sold`)
+
+A merchant is both, a service and a client. It needs to steadily interact on the marketplace and thus, should implement a kind of game loop or a series of scheduled events. The Merchant SDK offers a web server for sale/start/stop requests and and a base merchant loop. Subclassing and overwriting the `execute_logic` method is all one needs to get a merchant started.
 
 ## Merchant SDK
 
@@ -100,13 +117,3 @@ kafka_api = KafkaApi(host=host)
 market_situation_csv_url = kafka_api.request_csv_export_for_topic('marketSituation')
 market_situation_df = pd.read_csv(market_situation_csv_url)
 ```
-
-#### fetch data using the Management UI
-
-The management UI provides simple access to download the csv for a topic [here](http://vm-mpws2016hp1-02.eaalab.hpi.uni-potsdam.de/index.html#/data/export).
-
-Note: exporting the data can take a while, depending on the topic and amount of logs in that topic.
-
-![request csv](docs/csv_request.png)
-
-![download csv](docs/csv_download.png)

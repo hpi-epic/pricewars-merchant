@@ -16,7 +16,7 @@ from merchant_sdk.api import KafkaApi, PricewarsRequester
 '''
     Input
 '''
-merchant_token = 'bTEXsl4wJJomq5h1BaDEWCstSPbcGmIqFWO8IS5bltOcy6eBgrOD3H7Vgh8wUQnk'
+merchant_token = 'z35jXmfpJaK3KnpQpEV3DGQwBZocVgVVjZFHMv7fWRiqFYH5mm8z3YwE8lqeSMAB'
 merchant_id = None
 kafka_api = None
 
@@ -74,8 +74,8 @@ def download():
 
 def load_offline():
     global market_situation_df, buy_offer_df
-    market_situation_df = pd.read_csv('marketSituation.csv')
-    buy_offer_df = pd.read_csv('buyOffer.csv')
+    market_situation_df = pd.read_csv('../../marketSituation.csv')
+    buy_offer_df = pd.read_csv('../../buyOffer.csv')
 
 def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None):
     if product_id:
@@ -104,9 +104,9 @@ def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None
         'own_price': own_price,
         'price_rank': price_rank,
         'distance_to_cheapest_competitor': distance_to_cheapest_competitor,
-        'quality_rank': quality_rank,
-        'amount_of_all_competitors': amount_of_all_competitors,
-        'average_price_on_market': average_price_on_market
+        'quality_rank': quality_rank
+        #'amount_of_all_competitors': amount_of_all_competitors,
+        #'average_price_on_market': average_price_on_market
     }
 
 
@@ -146,7 +146,7 @@ def train():
 
     for product_id in data_products:
         data = data_products[product_id].dropna()
-        X = data[['price_rank', 'distance_to_cheapest_competitor', 'quality_rank','amount_of_all_competitors','average_price_on_market']]
+        X = data[['price_rank', 'distance_to_cheapest_competitor', 'quality_rank']]#, , 'quality_rank','amount_of_all_competitors','average_price_on_market']]
         y = data['sold'].copy()
         y[y > 1] = 1
 
@@ -160,6 +160,7 @@ def export_models():
     global model_products
     for product_id in model_products:
         model = model_products[product_id]
+        print("market_learning", model.coef_)
         filename = 'models/{}.pkl'.format(product_id)
         joblib.dump(model, make_relative_path(filename))
 
@@ -175,7 +176,7 @@ if __name__ == '__main__':
     kafka_api = KafkaApi(host=kafka_host)
 
     download()
-    # load_offline()
+    #load_offline()
     aggregate()
     train()
     export_models()

@@ -13,8 +13,8 @@ from merchant_sdk.models import Offer
 
 from machine_learning.market_learning import extract_features_from_offer_snapshot
 
-merchant_token = "{{API_TOKEN}}"
-#merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
+#merchant_token = "{{API_TOKEN}}"
+merchant_token = 'z35jXmfpJaK3KnpQpEV3DGQwBZocVgVVjZFHMv7fWRiqFYH5mm8z3YwE8lqeSMAB'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -79,6 +79,8 @@ class MLMerchant(MerchantBaseLogic):
                 complete_path = os.path.join(root, pkl_file)
                 product_id = int(pkl_file.split('.')[0])
                 result[product_id] = joblib.load(complete_path)
+                result[product_id].coef_[0][1] = np.absolute(result[product_id].coef_[0][1]) * -1
+                print(result[product_id].coef_)
             break
         return result
 
@@ -121,16 +123,30 @@ class MLMerchant(MerchantBaseLogic):
             offer_df = offer_df[offer_df['product_id'] == product_or_offer.product_id]
             own_offers_mask = offer_df['merchant_id'] == self.merchant_id
 
+            if product_or_offer.uid == 11:
+                price = 15
+            elif product_or_offer.uid == 12:
+                price = 12
+            else:
+                price = 9
+
             features = []
-            for potential_price_candidate in range(0.5, 100, 0.5):
-                potential_price = product_or_offer.price + potential_price_candidate
+            for potential_price in range(1, 200, 1):
+                potential_price_candidate = potential_price / 10.0
+                potential_price = price + potential_price_candidate #product_or_offer.price + potential_price_candidate
                 offer_df.loc[own_offers_mask, 'price'] = potential_price
                 features.append(extract_features_from_offer_snapshot(offer_df, self.merchant_id,
                                                                      product_id=product_or_offer.product_id))
             data = pd.DataFrame(features).dropna()
             # TODO: could be second row, currently
-            data['sell_prob'] = model.predict_proba(data)[:,1]
-            data['expected_profit'] = data['sell_prob'] * (data['own_price'] - product_or_offer.price)
+            try:
+                filtered = data[['price_rank', 'distance_to_cheapest_competitor', 'quality_rank']]
+                data['sell_prob'] = model.predict_proba(filtered)[:,1]
+                data['expected_profit'] = data['sell_prob'] * (data['own_price'] - price)
+                print("set price as ", data['own_price'][data['expected_profit'].argmax()])
+            except Exception as e:
+                print(e)
+            
             return data['own_price'][data['expected_profit'].argmax()]
         except (KeyError, ValueError) as e:
             if type(product_or_offer) == Offer:
@@ -141,11 +157,11 @@ class MLMerchant(MerchantBaseLogic):
         except Exception as e:
             pass
 
-    @property
     def execute_logic(self):
         next_training_session = self.last_learning \
                                 + datetime.timedelta(minutes=self.settings['minutes_between_learnings'])
-        if next_training_session >= datetime.datetime.now():
+        if next_training_session <= datetime.datetime.now():
+            print("learning")
             self.last_learning = datetime.datetime.now()
             trigger_learning(self.merchant_token, self.settings['kafka_reverse_proxy_url'])
 
@@ -168,11 +184,12 @@ class MLMerchant(MerchantBaseLogic):
                 pass
 
         for own_offer in own_offers:
-            own_offer.price = self.price_product(own_offer, current_offers=offers)
-            try:
-                self.marketplace_api.update_offer(own_offer)
-            except Exception as e:
-                print('error on updating offer:', e)
+            if own_offer.amount > 0:
+                own_offer.price = self.price_product(own_offer, current_offers=offers)
+                try:
+                    self.marketplace_api.update_offer(own_offer)
+                except Exception as e:
+                    print('error on updating offer:', e)
 
         for product in new_products:
             try:

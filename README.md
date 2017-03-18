@@ -6,7 +6,7 @@ This repository contains multiple sample merchants that each implement one of th
 
 * Cheapest
 * Second Cheapest
-* Random Thir
+* Random Third
   * randomly chooses either the first, second or third position in the price ranking
 * Two Bound 
   * has a minimum and maximum profit margin
@@ -96,6 +96,24 @@ The SDK contains models and request APIs to ease the development of a merchant:
 ## Machine Learning Sample Merchant
 
 Note: Look at [this notebook](merchant_sdk/samples/Working\ with\ Kafka\ data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.
+
+### Concept
+
+A machine learning merchant is like any other merchant, interacting on the marketplace. The difference is, that it uses trained models for predicting the demand of the customer for a product. These models need to be created and updated over time, which takes too much time to do on each price update. So updates to the models are done concurrently (asynchronously) by another process.
+
+The `machine_learning` folder contains
+
+* a new Merchant `MLMerchant.py`
+	* works as the sample merchants
+	* does not react to sold notifications
+	* maintains a constant amount of offers on the market
+	* update price of offers:
+		* randomly (exponential price distribution); if no model is available
+		* calculating the price that optimizes the expected profit for predicted customer demand; if model is available
+* `market_learning.py` download log data and trains a customer demand model. Overwrites model on filesystem
+
+The MLMerchant process invokes the `market_learning.py` script regularly and always reloads the model from the filesystem.
+
 
 ### Data
 

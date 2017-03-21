@@ -104,7 +104,8 @@ namespace :deploy do
       within release_path do
         execute "cd #{release_path}/machine_learning/ && sed -i 's/\{\{API_TOKEN\}\}/#{fetch(:api_token)}/' MLMerchant.py"
         execute "cp #{release_path}/machine_learning/MLMerchant.py #{release_path}/simple_competition_logic/MerchantApp.py"
-        execute "cp -Rf #{release_path}/machine_learning/* #{release_path}/simple_competition_logic"
+        #execute "cp -Rf #{release_path}/machine_learning/* #{release_path}/simple_competition_logic"
+        execute "cd #{release_path}/machine_learning/ && cp -Rf * #{release_path}/simple_competition_logic/"
       end
     end
   end

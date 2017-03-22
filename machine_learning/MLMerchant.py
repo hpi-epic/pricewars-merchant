@@ -13,8 +13,8 @@ from merchant_sdk.models import Offer
 
 from machine_learning.market_learning import extract_features_from_offer_snapshot
 
-#merchant_token = "{{API_TOKEN}}"
-merchant_token = 'z35jXmfpJaK3KnpQpEV3DGQwBZocVgVVjZFHMv7fWRiqFYH5mm8z3YwE8lqeSMAB'
+merchant_token = "{{API_TOKEN}}"
+#merchant_token = 'z35jXmfpJaK3KnpQpEV3DGQwBZocVgVVjZFHMv7fWRiqFYH5mm8z3YwE8lqeSMAB'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -36,7 +36,8 @@ def make_relative_path(path):
 
 
 def trigger_learning(merchant_token, kafka_host):
-    os.system('python3 market_learning.py -t "{:s}" -k "{:s}" &'.format(merchant_token, kafka_host))
+    fixed_path = make_relative_path("market_learning.py")
+    os.system('python3 {:s} -t "{:s}" -k "{:s}" &'.format(fixed_path, merchant_token, kafka_host))
 
 
 class MLMerchant(MerchantBaseLogic):

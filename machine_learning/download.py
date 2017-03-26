@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 
+sys.path.append('./')
 sys.path.append('../')
 from merchant_sdk.api import KafkaApi, PricewarsRequester
 

@@ -10,6 +10,7 @@ from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 
 
+sys.path.append('./')
 sys.path.append('../')
 from merchant_sdk.api import KafkaApi, PricewarsRequester
 
@@ -97,7 +98,7 @@ def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None
         price_rank = np.nan
         distance_to_cheapest_competitor = np.nan
         quality_rank = np.nan
-    
+
     amount_of_all_competitors = len(competitors)
     average_price_on_market = offers_df['price'].mean()
     return {

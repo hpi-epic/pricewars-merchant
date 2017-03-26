@@ -2,6 +2,7 @@ import argparse
 import sys
 import operator
 
+sys.path.append('./')
 sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi

@@ -6,6 +6,7 @@ import pandas as pd
 import datetime
 from sklearn.externals import joblib
 
+sys.path.append('./')
 sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi

@@ -38,6 +38,7 @@ def make_relative_path(path):
 
 def trigger_learning(merchant_token, kafka_host):
     fixed_path = make_relative_path("market_learning.py")
+    os.chdir(os.path.dirname(fixed_path))
     os.system('python3 {:s} -t "{:s}" -k "{:s}" &'.format(fixed_path, merchant_token, kafka_host))
 
 

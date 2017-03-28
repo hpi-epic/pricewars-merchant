@@ -157,7 +157,7 @@ def train():
         data = data_products[product_id].dropna()
         X = data[['amount_of_all_competitors',
                   'average_price_on_market',
-                  #'distance_to_cheapest_competitor',
+                  'distance_to_cheapest_competitor',
                   'price_rank',
                   'quality_rank',
                   ]]

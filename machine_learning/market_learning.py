@@ -9,7 +9,6 @@ import pandas as pd
 from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 
-
 sys.path.append('./')
 sys.path.append('../')
 from merchant_sdk.api import KafkaApi, PricewarsRequester
@@ -31,6 +30,7 @@ def parse_arguments():
     parser.add_argument('-t', '--merchant_token', metavar='merchant_token', type=str, default=merchant_token,
                         help='merchant token', required=True)
     return parser.parse_args()
+
 
 '''
     Output
@@ -65,6 +65,7 @@ def match_timestamps(continuous_timestamps, point_timestamps):
 
     return t_padded[original_locs]['timestamp']
 
+
 def download():
     global market_situation_df, buy_offer_df
 
@@ -73,10 +74,12 @@ def download():
     buy_offer_csv_url = kafka_api.request_csv_export_for_topic('buyOffer')
     buy_offer_df = pd.read_csv(buy_offer_csv_url)
 
+
 def load_offline():
     global market_situation_df, buy_offer_df
     market_situation_df = pd.read_csv('../../marketSituation.csv')
     buy_offer_df = pd.read_csv('../../buyOffer.csv')
+
 
 def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None):
     if product_id:
@@ -86,7 +89,7 @@ def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None
     has_offer = len(own_situation) > 0
     has_competitors = len(competitors) > 0
 
-    if (has_offer):
+    if has_offer:
         own_offer = own_situation.sort_values(by='price').iloc[0]
         own_price = own_offer['price']
         own_quality = own_offer['quality']
@@ -106,8 +109,8 @@ def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None
         'price_rank': price_rank,
         'distance_to_cheapest_competitor': distance_to_cheapest_competitor,
         'quality_rank': quality_rank
-        #'amount_of_all_competitors': amount_of_all_competitors,
-        #'average_price_on_market': average_price_on_market
+        # 'amount_of_all_competitors': amount_of_all_competitors,
+        # 'average_price_on_market': average_price_on_market
     }
 
 
@@ -142,12 +145,14 @@ def aggregate():
         filename = 'data/product_{}_data.csv'.format(product_id)
         data_products[product_id].to_csv(make_relative_path(filename))
 
+
 def train():
     global data_products, model_products
 
     for product_id in data_products:
         data = data_products[product_id].dropna()
-        X = data[['price_rank', 'distance_to_cheapest_competitor', 'quality_rank']]#, , 'quality_rank','amount_of_all_competitors','average_price_on_market']]
+        X = data[['price_rank', 'distance_to_cheapest_competitor',
+                  'quality_rank']]  # , , 'quality_rank','amount_of_all_competitors','average_price_on_market']]
         y = data['sold'].copy()
         y[y > 1] = 1
 
@@ -177,7 +182,7 @@ if __name__ == '__main__':
     kafka_api = KafkaApi(host=kafka_host)
 
     download()
-    #load_offline()
+    # load_offline()
     aggregate()
     train()
     export_models()

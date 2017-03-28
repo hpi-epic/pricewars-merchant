@@ -16,6 +16,7 @@ from machine_learning.market_learning import extract_features_from_offer_snapsho
 
 merchant_token = "{{API_TOKEN}}"
 #merchant_token = 'z35jXmfpJaK3KnpQpEV3DGQwBZocVgVVjZFHMv7fWRiqFYH5mm8z3YwE8lqeSMAB'
+merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -38,8 +39,10 @@ def make_relative_path(path):
 
 def trigger_learning(merchant_token, kafka_host):
     fixed_path = make_relative_path("market_learning.py")
+    old_dir = os.getcwd()
     os.chdir(os.path.dirname(fixed_path))
-    os.system('python3 {:s} -t "{:s}" -k "{:s}" &'.format(fixed_path, merchant_token, kafka_host))
+    os.system('python3 "{:s}" -t "{:s}" -k "{:s}" >> learning.log &'.format(fixed_path, merchant_token, kafka_host))
+    os.chdir(old_dir)
 
 
 class MLMerchant(MerchantBaseLogic):
@@ -80,10 +83,13 @@ class MLMerchant(MerchantBaseLogic):
             pkl_files = [f for f in files if f.endswith('.pkl')]
             for pkl_file in pkl_files:
                 complete_path = os.path.join(root, pkl_file)
-                product_id = int(pkl_file.split('.')[0])
-                result[product_id] = joblib.load(complete_path)
-                result[product_id].coef_[0][1] = np.absolute(result[product_id].coef_[0][1]) * -1
-                print(result[product_id].coef_)
+                try:
+                    product_id = int(pkl_file.split('.')[0])
+                    result[product_id] = joblib.load(complete_path)
+                    # print(result[product_id].coef_)
+                except ValueError:
+                    # do not load model files, that don't have the naming scheme
+                    pass
             break
         return result
 
@@ -112,13 +118,14 @@ class MLMerchant(MerchantBaseLogic):
         Merchant Logic
     '''
 
-    def price_product(self, product_or_offer, current_offers=None):
+    def price_product(self, product_or_offer, product_prices_by_uid, current_offers=None):
         """
         Computes a price for a product based on trained models or (exponential) random fallback
         :param product_or_offer: product object that is to be priced
         :param current_offers: list of offers
         :return:
         """
+        price = product_prices_by_uid[product_or_offer.uid]
         try:
             model = self.models_per_product[product_or_offer.product_id]
 
@@ -126,15 +133,8 @@ class MLMerchant(MerchantBaseLogic):
             offer_df = offer_df[offer_df['product_id'] == product_or_offer.product_id]
             own_offers_mask = offer_df['merchant_id'] == self.merchant_id
 
-            if product_or_offer.uid == 11:
-                price = 15
-            elif product_or_offer.uid == 12:
-                price = 12
-            else:
-                price = 9
-
             features = []
-            for potential_price in range(1, 200, 1):
+            for potential_price in range(1, 100, 1):
                 potential_price_candidate = potential_price / 10.0
                 potential_price = price + potential_price_candidate #product_or_offer.price + potential_price_candidate
                 offer_df.loc[own_offers_mask, 'price'] = potential_price
@@ -143,20 +143,22 @@ class MLMerchant(MerchantBaseLogic):
             data = pd.DataFrame(features).dropna()
             # TODO: could be second row, currently
             try:
-                filtered = data[['price_rank', 'distance_to_cheapest_competitor', 'quality_rank']]
+                filtered = data[['amount_of_all_competitors',
+                                 'average_price_on_market',
+                                 'distance_to_cheapest_competitor',
+                                 'price_rank',
+                                 'quality_rank',
+                                 ]]
                 data['sell_prob'] = model.predict_proba(filtered)[:,1]
                 data['expected_profit'] = data['sell_prob'] * (data['own_price'] - price)
+                data.to_csv('pricing_table.csv')
                 print("set price as ", data['own_price'][data['expected_profit'].argmax()])
             except Exception as e:
                 print(e)
             
             return data['own_price'][data['expected_profit'].argmax()]
         except (KeyError, ValueError) as e:
-            if type(product_or_offer) == Offer:
-                return product_or_offer.price
-            else:
-                print('exception', e, '--> random price')
-                return product_or_offer.price * (np.random.exponential() + 0.99)
+            return price * (np.random.exponential() + 0.99)
         except Exception as e:
             pass
 
@@ -164,9 +166,10 @@ class MLMerchant(MerchantBaseLogic):
         next_training_session = self.last_learning \
                                 + datetime.timedelta(minutes=self.settings['minutes_between_learnings'])
         if next_training_session <= datetime.datetime.now():
-            print("learning")
             self.last_learning = datetime.datetime.now()
             trigger_learning(self.merchant_token, self.settings['kafka_reverse_proxy_url'])
+
+        request_count = 0
 
         self.models_per_product = self.load_models_from_filesystem()
 
@@ -186,11 +189,15 @@ class MLMerchant(MerchantBaseLogic):
             except:
                 pass
 
+        products = self.producer_api.get_products()
+        product_prices_by_uid = {product.uid: product.price for product in products}
+
         for own_offer in own_offers:
             if own_offer.amount > 0:
-                own_offer.price = self.price_product(own_offer, current_offers=offers)
+                own_offer.price = self.price_product(own_offer, product_prices_by_uid, current_offers=offers)
                 try:
                     self.marketplace_api.update_offer(own_offer)
+                    request_count += 1
                 except Exception as e:
                     print('error on updating offer:', e)
 
@@ -204,9 +211,10 @@ class MLMerchant(MerchantBaseLogic):
                         self.marketplace_api.restock(offer.offer_id, amount=product.amount, signature=product.signature)
                     except Exception as e:
                         print('error on restocking an offer:', e)
-                    offer.price = self.price_product(product, current_offers=offers)
+                    offer.price = self.price_product(product, product_prices_by_uid, current_offers=offers)
                     try:
                         self.marketplace_api.update_offer(offer)
+                        request_count += 1
                     except Exception as e:
                         print('error on updating an offer:', e)
                 else:
@@ -215,7 +223,7 @@ class MLMerchant(MerchantBaseLogic):
                     offer.shipping_time['standard'] = self.settings['shipping']
                     offer.shipping_time['prime'] = self.settings['primeShipping']
                     offer.merchant_id = self.merchant_id
-                    offer.price = self.price_product(product, current_offers=offers+[offer])
+                    offer.price = self.price_product(product, product_prices_by_uid, current_offers=offers+[offer])
                     try:
                         self.marketplace_api.add_offer(offer)
                     except Exception as e:
@@ -223,7 +231,7 @@ class MLMerchant(MerchantBaseLogic):
             except Exception as e:
                 print('could not handle product:', product, e)
 
-        return 1.0 / settings['max_req_per_sec']
+        return max(1.0, request_count) / settings['max_req_per_sec']
 
 
 merchant_logic = MLMerchant()

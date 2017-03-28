@@ -157,9 +157,9 @@ class MerchantSampleLogic(MerchantBaseLogic):
             'prime': settings['primeShipping']
         }
         new_offer.prime = True
-        self.products[new_product.uid] = new_product
         try:
             new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
+            self.products[new_product.uid] = new_product
             self.offers[new_product.uid] = new_offer
         except Exception as e:
             print('error on adding a new offer:', e)

@@ -151,7 +151,6 @@ class MLMerchant(MerchantBaseLogic):
                                  ]]
                 data['sell_prob'] = model.predict_proba(filtered)[:,1]
                 data['expected_profit'] = data['sell_prob'] * (data['own_price'] - price)
-                data.to_csv('pricing_table.csv')
                 print("set price as ", data['own_price'][data['expected_profit'].argmax()])
             except Exception as e:
                 print(e)

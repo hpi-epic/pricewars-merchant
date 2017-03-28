@@ -75,8 +75,8 @@ def download():
     buy_offer_csv_url = kafka_api.request_csv_export_for_topic('buyOffer')
     buy_offer_df = pd.read_csv(buy_offer_csv_url)
 
-    market_situation_df.to_csv('data/ms.csv')
-    buy_offer_df.to_csv('data/buyOffer.csv')
+    # market_situation_df.to_csv('data/ms.csv')
+    # buy_offer_df.to_csv('data/buyOffer.csv')
 
 
 def load_offline():

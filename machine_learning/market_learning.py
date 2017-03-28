@@ -97,7 +97,7 @@ def extract_features_from_offer_snapshot(offers_df, merchant_id, product_id=None
         own_offer = own_situation.sort_values(by='price').iloc[0]
         own_price = own_offer['price']
         own_quality = own_offer['quality']
-        price_rank = (offers_df['price'] < own_price).sum() + 1
+        price_rank = 1 + (offers_df['price'] < own_price).sum() + ((offers_df['price'] == own_price).sum()/2)
         distance_to_cheapest_competitor = float(own_price - competitors['price'].min()) if has_competitors else np.nan
         quality_rank = (offers_df['quality'] < own_quality).sum() + 1
     else:

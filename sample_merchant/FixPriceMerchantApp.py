@@ -79,6 +79,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             offers = self.marketplace_api.get_offers(include_empty_offers=True)
         except Exception as e:
             print('error on getting offers from the marketplace:', e)
+            return 1.0 / settings['max_req_per_sec']
         own_offers = [offer for offer in offers if offer.merchant_id == self.merchant_id]
         own_offers_by_uid = {offer.uid: offer for offer in own_offers}
         missing_offers = settings['max_amount_of_offers'] - sum(offer.amount for offer in own_offers)

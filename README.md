@@ -78,7 +78,7 @@ A merchant is both, a service and a client. It needs to steadily interact on the
 
 ## Merchant SDK
 
-*Note*: Have a look at the samples in the merchant_sdk folder, [this one](merchant_sdk/samples/Handling\ products\ and\ offers.ipynb) shows how to use the sdk to call producer and marketplace APIs to implement product and offer handling.
+*Note*: Have a look at the samples in the merchant_sdk folder, [this one](merchant_sdk/samples/Handling%20products%20and%20offers.ipynb) shows how to use the sdk to call producer and marketplace APIs to implement product and offer handling.
 
 The SDK contains models and request APIs to ease the development of a merchant:
 
@@ -97,7 +97,7 @@ The SDK contains models and request APIs to ease the development of a merchant:
 
 ## Machine Learning Sample Merchant
 
-Note: Look at [this notebook](merchant_sdk/samples/Working\ with\ Kafka\ data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.
+Note: Look at [this notebook](merchant_sdk/samples/Working%20with%20Kafka%20data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.
 
 ### Concept
 

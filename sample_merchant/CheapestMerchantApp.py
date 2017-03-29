@@ -17,8 +17,6 @@ settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
     'producer_url': MerchantBaseLogic.get_producer_url(),
-    'intervalMin': 1.0,
-    'intervalMax': 1.0,
     'initialProducts': 5,
     'shipping': 5,
     'primeShipping': 1,

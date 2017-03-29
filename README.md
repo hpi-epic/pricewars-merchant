@@ -2,6 +2,8 @@
 
 This repository contains the merchant-component of the Pricewars-simulation. The merchant represents a vendor trying to sell their products at the highest possible profit at the marketplace. As such, they also represent a certain pricing strategy that is to be tested against other pricing strategies. Such a pricing strategy can be either very simple and rule-driven, such as "always be 10 cents cheaper than your competitors" or data-driven and use machine learning strategies.
 
+**Have a look at the IPython Notebooks [for the Marketplace and Product API](merchant_sdk/samples/Handling\ products\ and\ offers.ipynb) and [Kafka and Data API](merchant_sdk/samples/Working\ with\ Kafka\ data.ipynb)!**
+
 This repository contains multiple sample merchants that each implement one of the following strategies:
 
 * Cheapest

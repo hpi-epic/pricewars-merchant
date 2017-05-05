@@ -172,7 +172,7 @@ def train():
 
 def save_as_txt(model, filename):
     lines = []
-    # prepent header if file is created newly
+    # prepend header if file is created newly
     if not os.path.isfile(filename):
         lines.append(','.join([
             'amount_of_all_competitors',
@@ -191,6 +191,7 @@ def export_models():
         model = model_products[product_id]
         filename = 'models/{}.pkl'.format(product_id)
         joblib.dump(model, make_relative_path(filename))
+        save_as_txt(model, filename.split('.')[0] + '.csv')
 
 
 if __name__ == '__main__':

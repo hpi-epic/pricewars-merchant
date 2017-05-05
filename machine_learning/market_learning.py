@@ -170,6 +170,21 @@ def train():
         model_products[product_id] = model
 
 
+def save_as_txt(model, filename):
+    lines = []
+    # prepent header if file is created newly
+    if not os.path.isfile(filename):
+        lines.append(','.join([
+            'amount_of_all_competitors',
+            'average_price_on_market',
+            'distance_to_cheapest_competitor',
+            'price_rank',
+            'quality_rank',
+            ]))
+    lines.append(','.join(['{:f}'.format(coef) for coef in model.coef_[:,1]]))
+    open(filename, 'w+').writelines(lines)
+
+
 def export_models():
     global model_products
     for product_id in model_products:

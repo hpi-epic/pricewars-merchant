@@ -48,6 +48,13 @@ set :rvm_ruby_version, "2.3.1"
 # set :keep_releases, 5
 
 namespace :deploy do
+  task :prep do
+    on roles :all do
+      within release_path do
+        execute "cd #{release_path}/ && cd ../ && chown -R deployer:deployer *"
+      end
+    end
+  end
   task :start do
     on roles :all do
       within release_path do
@@ -109,6 +116,7 @@ namespace :deploy do
       end
     end
   end
-
+  
+  before :deploy, "deploy:prep"
   after :deploy, "deploy:start"
 end

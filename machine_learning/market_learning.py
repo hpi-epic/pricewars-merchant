@@ -191,7 +191,7 @@ def export_models():
         model = model_products[product_id]
         filename = 'models/{}.pkl'.format(product_id)
         joblib.dump(model, make_relative_path(filename))
-        save_as_txt(model, filename.split('.')[0] + '.csv')
+        save_as_txt(model, make_relative_path(filename.split('.')[0] + '.csv'))
 
 
 if __name__ == '__main__':

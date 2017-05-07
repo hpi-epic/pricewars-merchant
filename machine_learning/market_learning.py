@@ -181,7 +181,7 @@ def save_as_txt(model, filename):
             'price_rank',
             'quality_rank',
             ]))
-    lines.append(','.join(['{:f}'.format(coef) for coef in model.coef_[:,1]]))
+    lines.append(','.join(['{:f}'.format(coef) for coef in np.ndarray.flatten(model.coef_)]))
     open(filename, 'w+').writelines(lines)
 
 

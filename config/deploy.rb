@@ -51,7 +51,7 @@ namespace :deploy do
   task :prep do
     on roles :all do
       within release_path do
-        execute "cd #{release_path}/ && cd ../ && chown -R deployer:deployer *"
+        execute "cd #{release_path}/ && cd ../ && sudo chown -R deployer:deployer *"
       end
     end
   end

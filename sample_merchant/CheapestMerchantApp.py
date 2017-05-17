@@ -94,6 +94,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
+        if self.state != 'running':
+            return
         try:
             offers = self.marketplace_api.get_offers()
             self.buy_product_and_update_offer(offers)

@@ -21,8 +21,8 @@ settings = {
     'initialProducts': 5,
     'shipping': 5,
     'primeShipping': 1,
-    'max_req_per_sec': 10.0,
-    'underprice': 0.5,
+    'max_req_per_sec': 20.0,
+    'underprice': 0.2,
 }
 
 

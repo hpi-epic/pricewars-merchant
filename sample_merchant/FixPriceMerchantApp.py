@@ -14,8 +14,8 @@ settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
     'producer_url': MerchantBaseLogic.get_producer_url(),
-    'fixed_margin_perc': 20,
-    'max_amount_of_offers': 50,
+    'fixed_margin_perc': 50,
+    'max_amount_of_offers': 5,
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10.0

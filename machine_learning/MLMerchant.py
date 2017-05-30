@@ -24,11 +24,11 @@ settings = {
     'producer_url': MerchantBaseLogic.get_producer_url(),
     'kafka_reverse_proxy_url': MerchantBaseLogic.get_kafka_reverse_proxy_url(),
     'debug': True,
-    'max_amount_of_offers': 15,
+    'max_amount_of_offers': 10,
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10.0,
-    'minutes_between_learnings': 30.0,
+    'minutes_between_learnings': 3.0,
 }
 
 

@@ -20,8 +20,8 @@ settings = {
     'initialProducts': 5,
     'shipping': 5,
     'primeShipping': 1,
-    'maxReqPerSec': 10.0,
-    'underprice': 0.5
+    'maxReqPerSec': 40.0,
+    'underprice': 0.2
     }
 
 def get_from_list_by_key(dict_list, key, value):

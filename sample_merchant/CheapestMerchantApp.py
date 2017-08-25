@@ -116,7 +116,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def execute_logic(self):
         try:
             offers = self.marketplace_api.get_offers()
+            missing_offers = self.settings["initialProducts"] - len(self.offers)
             
+            if (len(missing_offers)>0):
+                for missing_offer in missing_offers:
+                    self.buy_product_and_update_offer(offers)
+
             for product in self.products.values():
                 if product.uid in self.offers:
                     offer = self.offers[product.uid]

@@ -8,7 +8,6 @@ from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
 
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'llhGt9Tao3YbN1ANPkI1QkDg3LC88EHt0xAu7dVvh4X45hSTSkVsVhZY3lgBzx60'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),

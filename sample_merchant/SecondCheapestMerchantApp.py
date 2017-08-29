@@ -13,7 +13,6 @@ from merchant_sdk.models import Offer
 '''
 
 merchant_token = "{{API_TOKEN}}"
-# merchant_token = 'PlmNksxJyL9bei6288Utupsi1vecpdPGOCd96aS4wbfbLmdTu8NpxFYxBDa1q1HF'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -23,7 +22,7 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10.0,
-    'priceDifference': 0.5,
+    'price_decrement': 0.05,
     'minimumMarginPercentile': 10
 }
 
@@ -109,7 +108,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
             elif cheapest_offer < offer.price < second_cheapest_offer:
                 second_cheapest_offer = offer.price
 
-        target_price = second_cheapest_offer - self.settings['priceDifference']
+        target_price = second_cheapest_offer - self.settings['price_decrement']
         if second_cheapest_offer <= maximum_price and target_price >= cheapest_offer:
             second_cheapest_offer = target_price
 

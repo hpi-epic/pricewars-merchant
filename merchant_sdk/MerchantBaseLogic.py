@@ -25,21 +25,21 @@ class MerchantBaseLogic:
 
     @staticmethod
     def get_marketplace_url():
-        marketplace_url = os.getenv('PRICEWARS_MARKETPLACE_URL', 'http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace')
+        marketplace_url = os.getenv('PRICEWARS_MARKETPLACE_URL', 'http://marketplace:8080/')
         if not marketplace_url.startswith('http://'):
             marketplace_url = 'http://' + marketplace_url
         return marketplace_url
 
     @staticmethod
     def get_producer_url():
-        producer_url = os.getenv('PRICEWARS_PRODUCER_URL', 'http://vm-mpws2016hp1-03.eaalab.hpi.uni-potsdam.de')
+        producer_url = os.getenv('PRICEWARS_PRODUCER_URL', 'http://producer:3050/')
         if not producer_url.startswith('http://'):
             producer_url = 'http://' + producer_url
         return producer_url
 
     @staticmethod
     def get_kafka_reverse_proxy_url():
-        url = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
+        url = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://kafka-reverse-proxy:8001')
         if not url.startswith('http://'):
             url = 'http://' + url
         return url
@@ -67,7 +67,7 @@ class MerchantBaseLogic:
             else:
                 self.interval = 5
 
-            time.sleep(self.interval)
+            time.sleep(max(0,self.interval))
 
     '''
         Settings and merchant controls for Web-Frontend

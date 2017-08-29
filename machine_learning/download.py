@@ -11,8 +11,7 @@ from merchant_sdk.api import KafkaApi, PricewarsRequester
 merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 merchant_token = 'bTEXsl4wJJomq5h1BaDEWCstSPbcGmIqFWO8IS5bltOcy6eBgrOD3H7Vgh8wUQnk'
 PricewarsRequester.add_api_token(merchant_token)
-kafka_api = KafkaApi(host='http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
-kafka_api = KafkaApi(host='http://127.0.0.1:8001')
+kafka_api = KafkaApi(host='http://kafka-reverse-proxy:8001')
 
 topics = ['marketSituation', 'buyOffer']
 

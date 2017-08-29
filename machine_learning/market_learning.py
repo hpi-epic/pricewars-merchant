@@ -21,7 +21,7 @@ merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCth
 merchant_id = None
 kafka_api = None
 
-default_host = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:8001')
+default_host = os.getenv('PRICEWARS_KAFKA_REVERSE_PROXY_URL', 'http://kafka-reverse-proxy:8001')
 
 
 def parse_arguments():
@@ -207,7 +207,11 @@ if __name__ == '__main__':
     print('params:', merchant_token, kafka_host)
 
     print('download')
-    download()
+    try:
+        download()
+    except:
+        print('No files available to download for learning. Skipping learning.')
+        exit()
     # load_offline()
     print('aggregate')
     aggregate()

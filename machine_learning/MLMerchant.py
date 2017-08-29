@@ -15,8 +15,6 @@ from merchant_sdk.models import Offer
 from machine_learning.market_learning import extract_features_from_offer_snapshot
 
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'z35jXmfpJaK3KnpQpEV3DGQwBZocVgVVjZFHMv7fWRiqFYH5mm8z3YwE8lqeSMAB'
-#merchant_token = '2ZnJAUNCcv8l2ILULiCwANo7LGEsHCRJlFdvj18MvG8yYTTtCfqN3fTOuhGCthWf'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -24,7 +22,7 @@ settings = {
     'producer_url': MerchantBaseLogic.get_producer_url(),
     'kafka_reverse_proxy_url': MerchantBaseLogic.get_kafka_reverse_proxy_url(),
     'debug': True,
-    'max_amount_of_offers': 10,
+    'max_amount_of_offers': 5,
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 10.0,
@@ -151,7 +149,7 @@ class MLMerchant(MerchantBaseLogic):
                                  ]]
                 data['sell_prob'] = model.predict_proba(filtered)[:,1]
                 data['expected_profit'] = data['sell_prob'] * (data['own_price'] - price)
-                print("set price as ", data['own_price'][data['expected_profit'].argmax()])
+                # print("set price as ", data['own_price'][data['expected_profit'].argmax()])
             except Exception as e:
                 print(e)
             
@@ -176,6 +174,7 @@ class MLMerchant(MerchantBaseLogic):
             offers = self.marketplace_api.get_offers(include_empty_offers=True)
         except Exception as e:
             print('error on getting offers:', e)
+            return max(1.0, request_count) / settings['max_req_per_sec']
         own_offers = [offer for offer in offers if offer.merchant_id == self.merchant_id]
         own_offers_by_uid = {offer.uid: offer for offer in own_offers}
         missing_offers = settings['max_amount_of_offers'] - sum(offer.amount for offer in own_offers)

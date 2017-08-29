@@ -12,7 +12,6 @@ from random import randint
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'GEKDWUPsjYDMH7jUlhw3tD5YZZowGneW3yjZT8RDgfZxmJSY1OaubfSBFH8V6m28'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -22,7 +21,7 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'max_req_per_sec': 20.0,
-    'underprice': 0.2,
+    'price_decrement': 0.05,
 }
 
 
@@ -152,11 +151,11 @@ class MerchantSampleLogic(MerchantBaseLogic):
         max_price = product.price*2
         target_position = randint(1,3)
         if (target_position == 3 and third_competitor_price > 0):
-            price = third_competitor_price - settings['underprice']
+            price = third_competitor_price - settings['price_decrement']
         elif (target_position == 2 and second_competitor_price > 0):
-            price = second_competitor_price - settings['underprice']
+            price = second_competitor_price - settings['price_decrement']
         else:
-            price = lowest_competitor_price - settings['underprice']
+            price = lowest_competitor_price - settings['price_decrement']
         price = min(price, max_price)
         if price < min_price:
             price = max_price

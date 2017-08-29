@@ -6,7 +6,7 @@ from ..models import Offer, MerchantRegisterResponse, ApiException
 
 class MarketplaceApi(PricewarsBaseApi):
 
-    def __init__(self, host='http://vm-mpws2016hp1-04.eaalab.hpi.uni-potsdam.de:8080/marketplace', debug=False):
+    def __init__(self, host='http://marketplace:8080/', debug=False):
         PricewarsBaseApi.__init__(self, host=host, debug=debug)
 
     def get_offers(self, include_empty_offers=False) -> List[Offer]:

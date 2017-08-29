@@ -9,13 +9,12 @@ from merchant_sdk.models import Offer
 import time
 
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'KUZU8W7LzexaimJDvyZ8JhglEZzEFbUZ544DbCYapWBYJUmFSLNm34YIdXWs92SF'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
     'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
     'producer_url': MerchantBaseLogic.get_producer_url(),
-    'priceDecrease': 0.05,
+    'price_decrement': 0.05,
     'initialProducts': 3,
     'minPriceMargin': 3.0,
     'maxPriceMargin': 12.0,
@@ -91,7 +90,7 @@ class MerchantD(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
-        print("sold offer")
+        # print("sold offer")
         self.execQueue.append((self.sold_product, [offer]))
 
     def buy_missing_products(self):
@@ -132,20 +131,26 @@ class MerchantD(MerchantBaseLogic):
         return self.calculate_intervall()
 
     def base_price_diff(self, offer):
-        product = self.products[offer.uid]
+        try:
+            product = self.products[offer.uid]
+        except KeyError:
+            # we see a product that we have not yet received from the producer
+            products = [p for p in self.producer_api.get_products() if p.uid == offer.uid]
+            product = products[0] # there should be only one product for a given uid
+            self.products[product.uid] = product
         return offer.price - product.price
 
     def adjust_prices(self, offer=None, lowest_price_diff=0):
         product = self.products[offer.uid]
         if not offer or not product:
             return
-        price_diff = min(lowest_price_diff - settings['priceDecrease'], settings['maxPriceMargin'])
+        price_diff = min(lowest_price_diff - settings['price_decrement'], settings['maxPriceMargin'])
         if price_diff < settings['minPriceMargin']:
             price_diff = settings['maxPriceMargin']
         new_product_price = product.price + price_diff
         if new_product_price != offer.price:
             offer.price = new_product_price
-            print("update to new price ", new_product_price)
+            # print("update to new price ", new_product_price)
             self.marketplace_api.update_offer(offer)
             self.request_done()
 
@@ -165,7 +170,7 @@ class MerchantD(MerchantBaseLogic):
                     self.adjust_prices(offer=own_offer)
 
     def sold_product(self, sold_offer):
-        print('soldProduct, offer:', sold_offer)
+        # print('soldProduct, offer:', sold_offer)
         if sold_offer.uid in self.offers:
             # print('found in offers')
             offer = self.offers[sold_offer.uid]
@@ -173,7 +178,8 @@ class MerchantD(MerchantBaseLogic):
             product = self.products[sold_offer.uid]
             product.amount -= sold_offer.amount_sold
             if product.amount <= 0:
-                print('product {:d} is out of stock!'.format(product.uid))
+                pass
+                # print('product {:d} is out of stock!'.format(product.uid))
             self.buy_product_and_update_offer()
 
     def add_new_product_to_offers(self, new_product):
@@ -184,24 +190,24 @@ class MerchantD(MerchantBaseLogic):
             'prime': settings['primeShipping']
         }
         new_offer.prime = True
-        # self.products[new_product.uid] = new_product
+        self.products[new_product.uid] = new_product
         new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
         self.offers[new_product.uid] = new_offer
 
     def restock_existing_product(self, new_product):
-        print('restock product', new_product)
+        # print('restock product', new_product)
         product = self.products[new_product.uid]
         product.amount += new_product.amount
         product.signature = new_product.signature
 
         offer = self.offers[product.uid]
-        print('in this offer:', offer)
+        # print('in this offer:', offer)
         offer.amount = product.amount
         offer.signature = product.signature
         self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
 
     def buy_product_and_update_offer(self):
-        print('buy Product and update')
+        # print('buy Product and update')
         new_product = self.producer_api.buy_product()
 
         if new_product.uid in self.offers:
@@ -234,9 +240,9 @@ class MerchantD(MerchantBaseLogic):
             return 0
         else:
             offer_count = self.active_offers_count()
-            remaining_reqs = settings['max_req_per_sec'] - len(self.marketplace_requests)
-            time_to_next_release = time.time() - self.marketplace_requests[len(self.marketplace_requests) - 1]
-            return (offer_count / (remaining_reqs + 1)) * time_to_next_release
+            remaining_reqs = max(1, settings['max_req_per_sec'] - len(self.marketplace_requests))
+            time_to_next_release = time.time() - self.marketplace_requests[-1]
+            return (offer_count / remaining_reqs) * time_to_next_release
 
 
 merchant_logic = MerchantD()

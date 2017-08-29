@@ -11,7 +11,6 @@ from merchant_sdk.models import Offer
     Template for Ruby deployment to insert defined tokens
 '''
 merchant_token = "{{API_TOKEN}}"
-#merchant_token = 'fikFWZXKVZIlioyFt3e55BSPoWUArm4XVom2OKMusegbTfqNiVRngtDWQhfIUjoz'
 
 settings = {
     'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
@@ -21,7 +20,7 @@ settings = {
     'shipping': 5,
     'primeShipping': 1,
     'maxReqPerSec': 40.0,
-    'underprice': 0.2
+    'price_decrement': 0.05
     }
 
 def get_from_list_by_key(dict_list, key, value):
@@ -94,6 +93,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
+        #TODO: we store the amount in self.offers but do not decrease it here
         if self.state != 'running':
             return
         try:
@@ -116,11 +116,12 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def execute_logic(self):
         try:
             offers = self.marketplace_api.get_offers()
-            missing_offers = self.settings["initialProducts"] - len(self.offers)
-            if (len(missing_offers)>0):
-                for missing_offer in missing_offers:
-                    self.buy_product_and_update_offer(offers)
-            
+
+            items_offered = sum(o.amount for o in offers if o.merchant_id == self.settings['merchant_id'])
+            while items_offered < (settings['initialProducts'] - 1):
+                self.buy_product_and_update_offer(offers)
+                items_offered = sum(o.amount for o in self.marketplace_api.get_offers() if o.merchant_id == self.settings['merchant_id'])
+
             for product in self.products.values():
                 if product.uid in self.offers:
                     offer = self.offers[product.uid]
@@ -130,7 +131,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
                     except Exception as e:
                         print('error on updating an offer:', e)
                 else:
-                    print ('ERROR: product uid is not in offers; skipping')
+                    print ('ERROR: product UID is not in offers; skipping.')
         except Exception as e:
             print('error on executing the logic:', e)
         return settings['maxReqPerSec']/10
@@ -146,7 +147,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             if offer.price < cheapest_offer:
                 cheapest_offer = offer.price
 
-        new_price = cheapest_offer - settings['underprice']
+        new_price = cheapest_offer - settings['price_decrement']
         if new_price < purchase_price:
             new_price = purchase_price
 
@@ -168,13 +169,13 @@ class MerchantSampleLogic(MerchantBaseLogic):
             print('error on adding a new offer:', e)
 
     def restock_existing_product(self, new_product, marketplace_offers):
-        print('restock product', new_product)
+        # print('restock product', new_product)
         product = self.products[new_product.uid]
         product.amount += new_product.amount
         product.signature = new_product.signature
 
         offer = self.offers[product.uid]
-        print('in this offer:', offer)
+        # print('in this offer:', offer)
         offer.price = self.calculate_prices(marketplace_offers, product.uid, product.price, product.product_id)
         offer.amount = product.amount
         offer.signature = product.signature

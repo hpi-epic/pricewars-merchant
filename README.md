@@ -95,6 +95,15 @@ The SDK contains models and request APIs to ease the development of a merchant:
 * MerchantBaseLogic
 	* defines interface for Merchants to work with the MerchantServer
 
+### Starting and Registering Your Own Merchant
+
+We included the `register_and_start_merchant.sh` script, which automates the process of registering your local merchant on the running platform and starting it.
+
+You can call the script like this:
+```$ MERCHANT_FILE=sample_merchant/CheapestMerchantApp.py MERCHANT_NAME="Merchant: Cheapest" MERCHANT_AL_NAME="Select Cheapest Offer" MERCHANT_PORT=5018 ./register_and_start_merchant.sh```
+
+This script creates a temporary merchant executable (port 5018) with the merchant token received from the marketplace. The temporary file has the ending `_tmp.py`. In case you want to fix smaller issues without registering a new merchant each time, you can restart the merchant by pressing Ctrl+C and calling `python3 sample_merchant/CheapestMerchantApp.py_tmp.py --port 5018`.
+
 ## Machine Learning Sample Merchant
 
 Note: Look at [this notebook](merchant_sdk/samples/Working%20with%20Kafka%20data.ipynb) for a quick access to the Kafka data using pandas and the merchant sdk.

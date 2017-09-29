@@ -10,7 +10,10 @@ class ProducerApi(PricewarsBaseApi):
         PricewarsBaseApi.__init__(self, host=host, debug=debug)
 
     def buy_product(self) -> Product:
-        r = self.request('get', 'buy')
+        return self.buy_products(amount=1)
+
+    def buy_products(self, amount) -> Product:
+        r = self.request('get', 'buy/{}'.format(amount))
         if 400 <= r.status_code < 500:
             raise ApiException(r.json())
         return Product.from_dict(r.json())

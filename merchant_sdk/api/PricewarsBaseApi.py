@@ -31,12 +31,8 @@ class PricewarsBaseApi:
             'patch': request_session.patch,
             'delete': request_session.delete
         }[method.lower()]
-        try:
-            response = func(url, *args, **kwargs)
-            if self.debug:
-                print('response', 'status({:d})'.format(response.status_code), response.text)
-            return response
-        except Exception as e:
-            if self.debug:
-                print('api request failed', e)
-            return None
+        
+        response = func(url, *args, **kwargs)
+        if self.debug:
+            print('response', 'status({:d})'.format(response.status_code), response.text)
+        return response

@@ -7,22 +7,6 @@ from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
 
-'''
-    Template for Ruby deployment to insert defined tokens
-'''
-merchant_token = "{{API_TOKEN}}"
-
-settings = {
-    'merchant_id': MerchantBaseLogic.calculate_id(merchant_token),
-    'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
-    'producer_url': MerchantBaseLogic.get_producer_url(),
-    'initialProducts': 5,
-    'shipping': 5,
-    'primeShipping': 1,
-    'maxReqPerSec': 40.0,
-    'price_decrement': 0.05
-    }
-
 def get_from_list_by_key(dict_list, key, value):
     elements = [elem for elem in dict_list if elem[key] == value]
     if elements:
@@ -31,9 +15,8 @@ def get_from_list_by_key(dict_list, key, value):
 
 
 class MerchantSampleLogic(MerchantBaseLogic):
-    def __init__(self):
-        MerchantBaseLogic.__init__(self)
-        global settings
+    def __init__(self, settings, merchant_token):
+        super().__init__()
         self.settings = settings
 
         '''
@@ -196,14 +179,26 @@ class MerchantSampleLogic(MerchantBaseLogic):
             print('error on buying a new product:', e)
 
 
-merchant_logic  = MerchantSampleLogic()
-merchant_server = MerchantServer(merchant_logic)
-app = merchant_server.app
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
     parser.add_argument('--port', type=int,
                         help='port to bind flask App to')
+    parser.add_argument('--token', type=str, help='Merchant secret token')
     args = parser.parse_args()
+
+    settings = {
+        'merchant_id': MerchantBaseLogic.calculate_id(args.token),
+        'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
+        'producer_url': MerchantBaseLogic.get_producer_url(),
+        'initialProducts': 5,
+        'shipping': 5,
+        'primeShipping': 1,
+        'maxReqPerSec': 40.0,
+        'price_decrement': 0.05
+    }
+
+    merchant_logic  = MerchantSampleLogic(settings, args.token)
+    merchant_server = MerchantServer(merchant_logic)
+    app = merchant_server.app
 
     app.run(host='0.0.0.0', port=args.port)

@@ -181,9 +181,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
-    parser.add_argument('--port', type=int,
-                        help='port to bind flask App to')
-    parser.add_argument('--token', type=str, help='Merchant secret token')
+    parser.add_argument('--port', type=int, help='port to bind flask App to')
+    parser.add_argument('--token', type=str, required=True, help='Merchant secret token')
     args = parser.parse_args()
 
     settings = {

@@ -1,6 +1,0 @@
-#!/bin/bash
-
-BASE_FOLDER=`dirname $MERCHANT_FILE`
-PYTHON_FILE=`basename $MERCHANT_FILE`
-
-cd $BASE_FOLDER && python $PYTHON_FILE --port $MERCHANT_PORT --token $MERCHANT_TOKEN

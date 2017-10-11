@@ -11,5 +11,5 @@ class ApiError(PricewarsObject):
 
 class ApiException(Exception):
 
-    def __init__(self, json_reponse):
-        self.error = ApiError.from_dict(json_reponse)
+    def __init__(self, json_response):
+        self.error = ApiError.from_dict(json_response)

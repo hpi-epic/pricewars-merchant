@@ -7,10 +7,7 @@ class KafkaApi(PricewarsBaseApi):
 
     def _request_data_export(self, topic):
         r = self.request('get', 'export/data/{:s}'.format(topic))
-        if r and (r.status_code < 100 or r.status_code >= 300 or not r.json()):
-            return None
-        url = r.json()['url']
-        return url
+        return r.json()['url']
 
     def download_csv_for_topic(self, topic, local_filename):
         url = self._request_data_export(topic)

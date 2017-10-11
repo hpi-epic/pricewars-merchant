@@ -1,7 +1,7 @@
 from typing import List
 
 from.PricewarsBaseApi import PricewarsBaseApi
-from ..models import Offer, MerchantRegisterResponse, ApiException
+from ..models import Offer, MerchantRegisterResponse
 
 
 class MarketplaceApi(PricewarsBaseApi):
@@ -14,20 +14,14 @@ class MarketplaceApi(PricewarsBaseApi):
         if include_empty_offers:
             params['include_empty_offer'] = True
         r = self.request('get', 'offers', params=params)
-        if 400 <= r.status_code < 500:
-            raise ApiException(r.json())
         return Offer.from_list(r.json())
 
     def add_offer(self, offer: Offer) -> Offer:
         r = self.request('post', 'offers', json=offer.to_dict())
-        if 400 <= r.status_code < 500:
-            raise ApiException(r.json())
         return Offer.from_dict(r.json())
 
     def update_offer(self, offer: Offer):
         r = self.request('put', 'offers/{:d}'.format(offer.offer_id), json=offer.to_dict())
-        if 400 <= r.status_code < 500:
-            raise ApiException(r.json())
 
     def restock(self, offer_id=-1, amount=0, signature=''):
         body = {
@@ -35,8 +29,6 @@ class MarketplaceApi(PricewarsBaseApi):
             'signature': signature
         }
         r = self.request('patch', 'offers/{:d}/restock'.format(offer_id), json=body)
-        if 400 <= r.status_code < 500:
-            raise ApiException(r.json())
 
     def register_merchant(self, api_endpoint_url='', merchant_name='', algorithm_name='') -> MerchantRegisterResponse:
         body = {
@@ -45,11 +37,7 @@ class MarketplaceApi(PricewarsBaseApi):
             'algorithm_name': algorithm_name
         }
         r = self.request('post', 'merchants', json=body)
-        if 400 <= r.status_code < 500:
-            raise ApiException(r.json())
         return MerchantRegisterResponse.from_dict(r.json())
 
     def unregister_merchant(self, merchant_token=''):
         r = self.request('delete', 'merchants/{:s}'.format(merchant_token))
-        if 400 <= r.status_code < 500:
-            raise ApiException(r.json())

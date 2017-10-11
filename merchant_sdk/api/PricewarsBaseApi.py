@@ -1,11 +1,13 @@
 from posixpath import join as urljoin
+import requests
 
 from .PricewarsRequester import request_session
+from merchant_sdk.models import ApiException
 
 
 class PricewarsBaseApi:
 
-    def __init__(self, host='', debug=True):
+    def __init__(self, host: str='', debug=True):
         self.host = host
         self.debug = debug
 
@@ -31,8 +33,20 @@ class PricewarsBaseApi:
             'patch': request_session.patch,
             'delete': request_session.delete
         }[method.lower()]
-        
-        response = func(url, *args, **kwargs)
+
+        try:
+            response = func(url, *args, **kwargs)
+        except requests.exceptions.ConnectionError:
+            raise RuntimeError('Cannot connect to ' + self.host)
+
         if self.debug:
             print('response', 'status({:d})'.format(response.status_code), response.text)
+
+        if 400 <= response.status_code < 600:
+            try:
+                error_msg = response.json()
+            except ValueError:
+                error_msg = {}
+            raise ApiException(error_msg)
+
         return response

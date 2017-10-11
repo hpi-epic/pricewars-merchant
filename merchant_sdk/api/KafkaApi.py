@@ -16,10 +16,9 @@ class KafkaApi(PricewarsBaseApi):
         url = self._request_data_export(topic)
         r = self.request('get', url, stream=True)
         with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024): 
+            for chunk in r.iter_content(chunk_size=1024):
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
-                    #f.flush() commented by recommendation from J.F.Sebastian
         return True
 
     def request_csv_export_for_topic(self, topic):

@@ -7,8 +7,6 @@ import hashlib
 import base64
 import os
 
-base_settings = {}
-
 
 class MerchantBaseLogic:
     __metaclass__ = ABCMeta

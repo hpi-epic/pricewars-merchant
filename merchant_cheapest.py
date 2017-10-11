@@ -1,17 +1,8 @@
 import argparse
-import sys
 
-sys.path.append('./')
-sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
 from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
-
-def get_from_list_by_key(dict_list, key, value):
-    elements = [elem for elem in dict_list if elem[key] == value]
-    if elements:
-        return elements[0]
-    return None
 
 
 class MerchantSampleLogic(MerchantBaseLogic):
@@ -91,7 +82,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
     def setup(self):
         try:
             marketplace_offers = self.marketplace_api.get_offers()
-            for i in range(settings['initialProducts']):
+            for i in range(self.settings['initialProducts']):
                 self.buy_product_and_update_offer(marketplace_offers)
         except Exception as e:
             print('error on setup:', e)
@@ -101,7 +92,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             offers = self.marketplace_api.get_offers()
 
             items_offered = sum(o.amount for o in offers if o.merchant_id == self.settings['merchant_id'])
-            while items_offered < (settings['initialProducts'] - 1):
+            while items_offered < (self.settings['initialProducts'] - 1):
                 self.buy_product_and_update_offer(offers)
                 items_offered = sum(o.amount for o in self.marketplace_api.get_offers() if o.merchant_id == self.settings['merchant_id'])
 
@@ -117,7 +108,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
                     print ('ERROR: product UID is not in offers; skipping.')
         except Exception as e:
             print('error on executing the logic:', e)
-        return settings['maxReqPerSec']/10
+        return self.settings['maxReqPerSec']/10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
         competitive_offers = []
@@ -130,7 +121,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
             if offer.price < cheapest_offer:
                 cheapest_offer = offer.price
 
-        new_price = cheapest_offer - settings['price_decrement']
+        new_price = cheapest_offer - self.settings['price_decrement']
         if new_price < purchase_price:
             new_price = purchase_price
 
@@ -140,8 +131,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         new_offer = Offer.from_product(new_product)
         new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price, new_product.product_id)
         new_offer.shipping_time = {
-            'standard': settings['shipping'],
-            'prime': settings['primeShipping']
+            'standard': self.settings['shipping'],
+            'prime': self.settings['primeShipping']
         }
         new_offer.prime = True
         try:
@@ -179,14 +170,9 @@ class MerchantSampleLogic(MerchantBaseLogic):
             print('error on buying a new product:', e)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
-    parser.add_argument('--port', type=int, help='port to bind flask App to')
-    parser.add_argument('--token', type=str, required=True, help='Merchant secret token')
-    args = parser.parse_args()
-
+def run_merchant(port, token):
     settings = {
-        'merchant_id': MerchantBaseLogic.calculate_id(args.token),
+        'merchant_id': MerchantBaseLogic.calculate_id(token),
         'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
         'producer_url': MerchantBaseLogic.get_producer_url(),
         'initialProducts': 5,
@@ -196,8 +182,16 @@ if __name__ == "__main__":
         'price_decrement': 0.05
     }
 
-    merchant_logic  = MerchantSampleLogic(settings, args.token)
+    merchant_logic = MerchantSampleLogic(settings, token)
     merchant_server = MerchantServer(merchant_logic)
     app = merchant_server.app
+    app.run(host='0.0.0.0', port=port)
 
-    app.run(host='0.0.0.0', port=args.port)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
+    parser.add_argument('--port', type=int, help='port to bind flask App to')
+    parser.add_argument('--token', type=str, required=True, help='Merchant secret token')
+    args = parser.parse_args()
+    run_merchant(args.port, args.token)
+

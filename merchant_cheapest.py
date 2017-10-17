@@ -67,7 +67,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         return self.settings
 
     def sold_offer(self, offer):
-        #TODO: we store the amount in self.offers but do not decrease it here
+        # TODO: we store the amount in self.offers but do not decrease it here
         if self.state != 'running':
             return
         try:

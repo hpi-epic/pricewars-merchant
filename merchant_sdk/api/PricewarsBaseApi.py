@@ -11,7 +11,7 @@ class PricewarsBaseApi:
         self.host = host
         self.debug = debug
 
-    def request(self, method, resource, *args, **kwargs):
+    def request(self, method, resource, **kwargs):
         """
         Unified request function
         Use for error handling
@@ -22,7 +22,7 @@ class PricewarsBaseApi:
         :return:
         """
         if self.debug:
-            print('request', self.__class__, method, resource, args, kwargs)
+            print('request', self.__class__, method, resource, kwargs)
         url = urljoin(self.host, resource)
         func = {
             'options': request_session.options,
@@ -35,7 +35,7 @@ class PricewarsBaseApi:
         }[method.lower()]
 
         try:
-            response = func(url, *args, **kwargs)
+            response = func(url, **kwargs)
         except requests.exceptions.ConnectionError:
             raise RuntimeError('Cannot connect to ' + self.host)
 

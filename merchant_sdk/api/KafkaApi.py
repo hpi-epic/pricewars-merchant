@@ -2,8 +2,8 @@ from.PricewarsBaseApi import PricewarsBaseApi
 
 
 class KafkaApi(PricewarsBaseApi):
-    def __init__(self, host='http://kafka-reverse-proxy:8001', debug=False):
-        PricewarsBaseApi.__init__(self, host=host, debug=debug)
+    def __init__(self, token: str, host: str='http://kafka-reverse-proxy:8001', debug: bool=False):
+        super().__init__(token, host, debug)
 
     def _request_data_export(self, topic):
         r = self.request('get', 'export/data/{:s}'.format(topic))

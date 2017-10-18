@@ -1,7 +1,7 @@
 import argparse
 
 from merchant_sdk import MerchantBaseLogic, MerchantServer
-from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
+from merchant_sdk.api import MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
 
 
@@ -25,9 +25,8 @@ class MerchantSampleLogic(MerchantBaseLogic):
         '''
             Setup API
         '''
-        PricewarsRequester.add_api_token(self.merchant_token)
-        self.marketplace_api = MarketplaceApi(host=self.settings['marketplace_url'])
-        self.producer_api = ProducerApi(host=self.settings['producer_url'])
+        self.marketplace_api = MarketplaceApi(self.merchant_token, host=self.settings['marketplace_url'])
+        self.producer_api = ProducerApi(self.merchant_token, host=self.settings['producer_url'])
 
         '''
             Start Logic Loop

@@ -112,8 +112,7 @@ class CheapestMerchant(MerchantBaseLogic):
         return self.settings['maxReqPerSec']/10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
-        competitive_offers = []
-        [competitive_offers.append(offer) for offer in marketplace_offers if offer.merchant_id != self.merchant_id and offer.product_id == product_id]
+        competitive_offers = [offer for offer in marketplace_offers if offer.merchant_id != self.merchant_id and offer.product_id == product_id]
         cheapest_offer = 999
 
         if len(competitive_offers) == 0:
@@ -172,8 +171,9 @@ class CheapestMerchant(MerchantBaseLogic):
 
 
 def run_merchant(port, token):
-    merchant_logic = CheapestMerchant(token, port)
-    merchant_server = MerchantServer(merchant_logic)
+    merchant = CheapestMerchant(token, port)
+    merchant.start()
+    merchant_server = MerchantServer(merchant)
     app = merchant_server.app
     app.run(host='0.0.0.0', port=port)
 

@@ -65,7 +65,7 @@ class MerchantBaseLogic:
             else:
                 self.interval = 5
 
-            time.sleep(max(0,self.interval))
+            time.sleep(max(0, self.interval))
 
     '''
         Settings and merchant controls for Web-Frontend

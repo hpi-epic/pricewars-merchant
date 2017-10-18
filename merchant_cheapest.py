@@ -5,32 +5,34 @@ from merchant_sdk.api import MarketplaceApi, ProducerApi
 from merchant_sdk.models import Offer
 
 
-class MerchantSampleLogic(MerchantBaseLogic):
-    def __init__(self, settings, merchant_token):
+class CheapestMerchant(MerchantBaseLogic):
+    def __init__(self, token, port):
         super().__init__()
-        self.settings = settings
 
-        '''
-            Information store
-        '''
+        self.settings = {
+            'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
+            'producer_url': MerchantBaseLogic.get_producer_url(),
+            'initialProducts': 5,
+            'shipping': 5,
+            'primeShipping': 1,
+            'maxReqPerSec': 40.0,
+            'price_decrement': 0.05
+        }
+
+        self.marketplace_api = MarketplaceApi(token, host=self.settings['marketplace_url'])
+        if token is None:
+            token = self.marketplace_api.register_merchant(merchant_name='Cheapest', port=port).merchant_token
+
+        self.settings['merchant_id'] = MerchantBaseLogic.calculate_id(token)
+
         self.products = {}
         self.offers = {}
 
-        '''
-            Predefined API token
-        '''
-        self.merchant_id = settings['merchant_id']
-        self.merchant_token = merchant_token
+        self.merchant_id = self.settings['merchant_id']
+        self.merchant_token = token
 
-        '''
-            Setup API
-        '''
-        self.marketplace_api = MarketplaceApi(self.merchant_token, host=self.settings['marketplace_url'])
         self.producer_api = ProducerApi(self.merchant_token, host=self.settings['producer_url'])
 
-        '''
-            Start Logic Loop
-        '''
         self.run_logic_loop()
 
     def update_api_endpoints(self):
@@ -170,18 +172,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
 
 
 def run_merchant(port, token):
-    settings = {
-        'merchant_id': MerchantBaseLogic.calculate_id(token),
-        'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
-        'producer_url': MerchantBaseLogic.get_producer_url(),
-        'initialProducts': 5,
-        'shipping': 5,
-        'primeShipping': 1,
-        'maxReqPerSec': 40.0,
-        'price_decrement': 0.05
-    }
-
-    merchant_logic = MerchantSampleLogic(settings, token)
+    merchant_logic = CheapestMerchant(token, port)
     merchant_server = MerchantServer(merchant_logic)
     app = merchant_server.app
     app.run(host='0.0.0.0', port=port)
@@ -190,7 +181,7 @@ def run_merchant(port, token):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
     parser.add_argument('--port', type=int, help='port to bind flask App to')
-    parser.add_argument('--token', type=str, required=True, help='Merchant secret token')
+    parser.add_argument('--token', type=str, help='Merchant secret token')
     args = parser.parse_args()
     run_merchant(args.port, args.token)
 

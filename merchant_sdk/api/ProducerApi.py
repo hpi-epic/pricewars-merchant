@@ -22,21 +22,21 @@ class ProducerApi(PricewarsBaseApi):
 
     def add_products(self, products: List[Product]):
         product_dict_list = [p.to_dict() for p in products]
-        r = self.request('post', 'products', json=product_dict_list)
+        self.request('post', 'products', json=product_dict_list)
 
     def update_products(self, products: List[Product]):
         product_dict_list = [p.to_dict() for p in products]
-        r = self.request('put', 'products', json=product_dict_list)
+        self.request('put', 'products', json=product_dict_list)
 
     def get_product(self, product_uid) -> Product:
         r = self.request('get', 'products/{}'.format(product_uid))
         return Product.from_dict(r.json())
 
     def add_product(self, product: Product):
-        r = self.request('post', 'products', json=product.to_dict())
+        self.request('post', 'products', json=product.to_dict())
 
     def update_product(self, product: Product):
-        r = self.request('put', 'products/{}'.format(product.uid), json=product.to_dict())
+        self.request('put', 'products/{}'.format(product.uid), json=product.to_dict())
 
     def delete_product(self, product_uid):
-        r = self.request('delete', 'products/{}'.format(product_uid))
+        self.request('delete', 'products/{}'.format(product_uid))

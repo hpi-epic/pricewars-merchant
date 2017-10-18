@@ -1,16 +1,18 @@
 from urllib.parse import urljoin
 import requests
+from typing import Optional
 
 from merchant_sdk.models import ApiException
 
 
 class PricewarsBaseApi:
 
-    def __init__(self, token: str, host: str, debug: bool):
+    def __init__(self, token: Optional[str], host: str, debug: bool):
         self.host = host
         self.debug = debug
         self.session = requests.Session()
-        self.session.headers.update({'Authorization': 'Token {:s}'.format(token)})
+        if token is not None:
+            self.set_auth_token(token)
 
     def request(self, method: str, resource: str, **kwargs):
         if self.debug:
@@ -33,3 +35,6 @@ class PricewarsBaseApi:
             raise ApiException(error_msg)
 
         return response
+
+    def set_auth_token(self, token: str):
+        self.session.headers.update({'Authorization': 'Token {:s}'.format(token)})

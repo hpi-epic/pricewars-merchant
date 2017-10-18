@@ -6,7 +6,7 @@ from ..models import Product
 
 class ProducerApi(PricewarsBaseApi):
 
-    def __init__(self, token: str, host: str='http://producer', debug: bool=False):
+    def __init__(self, token: str, host: str='http://producer:3050', debug: bool=False):
         super().__init__(token, host, debug)
 
     def buy_product(self) -> Product:

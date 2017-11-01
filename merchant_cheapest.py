@@ -6,7 +6,7 @@ from merchant_sdk.models import Offer
 
 
 class CheapestMerchant(MerchantBaseLogic):
-    def __init__(self, token, port):
+    def __init__(self, token , port):
         super().__init__()
 
         self.settings = {
@@ -21,7 +21,8 @@ class CheapestMerchant(MerchantBaseLogic):
 
         self.marketplace_api = MarketplaceApi(token, host=self.settings['marketplace_url'])
         if token is None:
-            token = self.marketplace_api.register_merchant(merchant_name='Cheapest', port=port).merchant_token
+            token = self.marketplace_api.register(endpoint_url_or_port=port,
+                                                  merchant_name='Cheapest').merchant_token
 
         self.settings['merchant_id'] = MerchantBaseLogic.calculate_id(token)
 
@@ -80,6 +81,7 @@ class CheapestMerchant(MerchantBaseLogic):
     '''
         Merchant Logic for being the cheapest
     '''
+
     def setup(self):
         try:
             marketplace_offers = self.marketplace_api.get_offers()
@@ -95,7 +97,8 @@ class CheapestMerchant(MerchantBaseLogic):
             items_offered = sum(o.amount for o in offers if o.merchant_id == self.settings['merchant_id'])
             while items_offered < (self.settings['initialProducts'] - 1):
                 self.buy_product_and_update_offer(offers)
-                items_offered = sum(o.amount for o in self.marketplace_api.get_offers() if o.merchant_id == self.settings['merchant_id'])
+                items_offered = sum(o.amount for o in self.marketplace_api.get_offers() if
+                                    o.merchant_id == self.settings['merchant_id'])
 
             for product in self.products.values():
                 if product.uid in self.offers:
@@ -106,13 +109,14 @@ class CheapestMerchant(MerchantBaseLogic):
                     except Exception as e:
                         print('error on updating an offer:', e)
                 else:
-                    print ('ERROR: product UID is not in offers; skipping.')
+                    print('ERROR: product UID is not in offers; skipping.')
         except Exception as e:
             print('error on executing the logic:', e)
-        return self.settings['maxReqPerSec']/10
+        return self.settings['maxReqPerSec'] / 10
 
     def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
-        competitive_offers = [offer for offer in marketplace_offers if offer.merchant_id != self.merchant_id and offer.product_id == product_id]
+        competitive_offers = [offer for offer in marketplace_offers if
+                              offer.merchant_id != self.merchant_id and offer.product_id == product_id]
         cheapest_offer = 999
 
         if len(competitive_offers) == 0:
@@ -129,7 +133,8 @@ class CheapestMerchant(MerchantBaseLogic):
 
     def add_new_product_to_offers(self, new_product, marketplace_offers):
         new_offer = Offer.from_product(new_product)
-        new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price, new_product.product_id)
+        new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price,
+                                                new_product.product_id)
         new_offer.shipping_time = {
             'standard': self.settings['shipping'],
             'prime': self.settings['primeShipping']
@@ -180,8 +185,8 @@ def run_merchant(port, token):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
-    parser.add_argument('--port', type=int, help='port to bind flask App to')
-    parser.add_argument('--token', type=str, help='Merchant secret token')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--port', type=int, help='port to bind flask App to')
+    group.add_argument('--token', type=str, help='Merchant secret token')
     args = parser.parse_args()
     run_merchant(args.port, args.token)
-

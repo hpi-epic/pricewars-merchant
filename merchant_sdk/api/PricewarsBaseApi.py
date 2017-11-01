@@ -2,8 +2,6 @@ from urllib.parse import urljoin
 import requests
 from typing import Optional
 
-from merchant_sdk.models import ApiException
-
 
 class PricewarsBaseApi:
 
@@ -19,21 +17,12 @@ class PricewarsBaseApi:
             print('request', self.__class__, method, resource, kwargs)
 
         url = urljoin(self.host, resource)
-        try:
-            response = self.session.request(method, url, **kwargs)
-        except requests.exceptions.ConnectionError:
-            raise RuntimeError('Cannot connect to ' + self.host)
+        response = self.session.request(method, url, **kwargs)
 
         if self.debug:
             print('response', 'status({:d})'.format(response.status_code), response.text)
 
-        if 400 <= response.status_code < 600:
-            try:
-                error_msg = response.json()
-            except ValueError:
-                error_msg = {}
-            raise ApiException(error_msg)
-
+        response.raise_for_status()
         return response
 
     def set_auth_token(self, token: str):

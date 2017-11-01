@@ -1,15 +1,15 @@
 from typing import List
 from typing import Optional
+from typing import Union
 import socket
 from urllib.parse import urlparse
 
-from.PricewarsBaseApi import PricewarsBaseApi
+from .PricewarsBaseApi import PricewarsBaseApi
 from ..models import Offer, MerchantRegisterResponse
 
 
 class MarketplaceApi(PricewarsBaseApi):
-
-    def __init__(self, token: Optional[str]=None, host: str='http://marketplace:8080', debug: bool=False):
+    def __init__(self, token: Optional[str] = None, host: str = 'http://marketplace:8080', debug: bool = False):
         super().__init__(token, host, debug)
 
     def get_offers(self, include_empty_offers=False) -> List[Offer]:
@@ -33,17 +33,17 @@ class MarketplaceApi(PricewarsBaseApi):
         }
         self.request('patch', 'offers/{:d}/restock'.format(offer_id), json=body)
 
-    def register_merchant(self, merchant_name: str, algorithm_name: str = '', api_endpoint_url: Optional[str] = None,
-                          port: Optional[int] = None) -> MerchantRegisterResponse:
+    def register(self, endpoint_url_or_port: Union[str, int], merchant_name: str,
+                          algorithm_name: str = '') -> MerchantRegisterResponse:
 
-        if api_endpoint_url is None and port is None:
-            raise RuntimeError('api_endpoint_url or port must be set')
-
-        if api_endpoint_url is None:
-            api_endpoint_url = 'http://{}:{}'.format(self._get_ip_address(self.host), port)
+        if type(endpoint_url_or_port) == int:
+            port = endpoint_url_or_port
+            endpoint_url = 'http://{}:{}'.format(self._get_ip_address(self.host), port)
+        else:
+            endpoint_url = endpoint_url_or_port
 
         body = {
-            'api_endpoint_url': api_endpoint_url,
+            'api_endpoint_url': endpoint_url,
             'merchant_name': merchant_name,
             'algorithm_name': algorithm_name
         }
@@ -52,7 +52,7 @@ class MarketplaceApi(PricewarsBaseApi):
         self.set_auth_token(response.merchant_token)
         return response
 
-    def unregister_merchant(self, merchant_token=''):
+    def unregister(self, merchant_token=''):
         self.request('delete', 'merchants/{:s}'.format(merchant_token))
 
     @staticmethod

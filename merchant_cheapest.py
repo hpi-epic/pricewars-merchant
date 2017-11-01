@@ -20,6 +20,7 @@ class CheapestMerchant(MerchantBaseLogic):
         }
 
         self.marketplace_api = MarketplaceApi(token, host=self.settings['marketplace_url'])
+        self.marketplace_api.wait_for_host()
         if token is None:
             token = self.marketplace_api.register(endpoint_url_or_port=port,
                                                   merchant_name='Cheapest').merchant_token

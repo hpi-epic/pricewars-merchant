@@ -1,6 +1,7 @@
 from merchant_sdk.api import MarketplaceApi, ProducerApi
 
 marketplace = MarketplaceApi()
+marketplace.wait_for_host()
 r = marketplace.register(endpoint_url_or_port=5009, merchant_name='TEST', algorithm_name='test')
 merchant_id = r.merchant_id
 token = r.merchant_token

@@ -1,10 +1,10 @@
 from urllib.parse import urljoin
 import requests
+from time import time
 from typing import Optional
 
 
 class PricewarsBaseApi:
-
     def __init__(self, token: Optional[str], host: str, debug: bool):
         self.host = host if host.startswith('http://') else 'http://' + host
         self.debug = debug
@@ -27,3 +27,16 @@ class PricewarsBaseApi:
 
     def set_auth_token(self, token: str):
         self.session.headers.update({'Authorization': 'Token {:s}'.format(token)})
+
+    def wait_for_host(self, timeout: int = 60) -> None:
+        """
+        Waits until it is possible to connect to host.
+        """
+        start = time()
+        while time() - start < timeout:
+            try:
+                self.session.get(self.host)
+                return
+            except requests.exceptions.ConnectionError:
+                pass
+        raise RuntimeError(self.host + ' not reachable')

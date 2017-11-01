@@ -1,5 +1,4 @@
 import json
-from typing import Type
 
 from flask import Flask, request, Response
 from flask_cors import CORS
@@ -16,7 +15,7 @@ def json_response(obj):
 
 class MerchantServer:
     
-    def __init__(self, merchant_logic: Type[MerchantBaseLogic], debug=False):
+    def __init__(self, merchant_logic: MerchantBaseLogic, debug=False):
         self.merchant_logic = merchant_logic
         self.server_settings = {
             'debug': debug

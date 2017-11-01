@@ -38,7 +38,7 @@ class MarketplaceApi(PricewarsBaseApi):
 
         if type(endpoint_url_or_port) == int:
             port = endpoint_url_or_port
-            endpoint_url = 'http://{}:{}'.format(self._get_ip_address(self.host), port)
+            endpoint_url = 'http://{}:{}'.format(self._get_own_ip_address(self.host), port)
         else:
             endpoint_url = endpoint_url_or_port
 
@@ -56,8 +56,11 @@ class MarketplaceApi(PricewarsBaseApi):
         self.request('delete', 'merchants/{:s}'.format(merchant_token))
 
     @staticmethod
-    def _get_ip_address(destination: str):
-        url = urlparse(destination)
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect((url.hostname, url.port))
-        return s.getsockname()[0]
+    def _get_own_ip_address(destination: str):
+        try:
+            url = urlparse(destination)
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect((url.hostname, url.port or 80))
+            return s.getsockname()[0]
+        except socket.gaierror:
+            raise RuntimeError("Cannot connect to " + destination)

@@ -6,7 +6,7 @@ from merchant_sdk.models import Offer
 
 
 class CheapestMerchant(MerchantBaseLogic):
-    def __init__(self, token , port):
+    def __init__(self, token, port):
         super().__init__()
 
         self.settings = {

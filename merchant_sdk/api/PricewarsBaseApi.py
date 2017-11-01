@@ -6,7 +6,7 @@ from typing import Optional
 class PricewarsBaseApi:
 
     def __init__(self, token: Optional[str], host: str, debug: bool):
-        self.host = host
+        self.host = host if host.startswith('http://') else 'http://' + host
         self.debug = debug
         self.session = requests.Session()
         if token is not None:

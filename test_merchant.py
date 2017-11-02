@@ -1,4 +1,5 @@
 from merchant_sdk.api import MarketplaceApi, ProducerApi
+from merchant_sdk.models import Offer
 
 marketplace = MarketplaceApi()
 marketplace.wait_for_host()

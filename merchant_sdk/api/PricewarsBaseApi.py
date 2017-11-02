@@ -3,6 +3,8 @@ import requests
 from time import time
 from typing import Optional
 
+from merchant_sdk.models.ApiError import ApiError
+
 
 class PricewarsBaseApi:
     def __init__(self, token: Optional[str], host: str, debug: bool):
@@ -22,7 +24,10 @@ class PricewarsBaseApi:
         if self.debug:
             print('response', 'status({:d})'.format(response.status_code), response.text)
 
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            raise ApiError(response.status_code, url, response.text) from None
         return response
 
     def set_auth_token(self, token: str):

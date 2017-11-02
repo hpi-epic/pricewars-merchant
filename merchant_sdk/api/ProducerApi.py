@@ -5,8 +5,9 @@ from ..models import Product
 
 
 class ProducerApi(PricewarsBaseApi):
+    DEFAULT_URL = 'http://producer:3050'
 
-    def __init__(self, token: str, host: str='http://producer:3050', debug: bool=False):
+    def __init__(self, token: str, host: str=DEFAULT_URL, debug: bool=False):
         super().__init__(token, host, debug)
 
     def buy_product(self) -> Product:

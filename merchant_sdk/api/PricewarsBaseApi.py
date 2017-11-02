@@ -8,7 +8,7 @@ from merchant_sdk.models.ApiError import ApiError
 
 class PricewarsBaseApi:
     def __init__(self, token: Optional[str], host: str, debug: bool):
-        self.host = host if host.startswith('http://') else 'http://' + host
+        self.host = host if '://' in host else 'http://' + host
         self.debug = debug
         self.session = requests.Session()
         if token is not None:

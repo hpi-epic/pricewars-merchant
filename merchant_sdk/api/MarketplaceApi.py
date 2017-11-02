@@ -9,7 +9,9 @@ from ..models import Offer, MerchantRegisterResponse
 
 
 class MarketplaceApi(PricewarsBaseApi):
-    def __init__(self, token: Optional[str] = None, host: str = 'http://marketplace:8080', debug: bool = False):
+    DEFAULT_URL = 'http://marketplace:8080'
+
+    def __init__(self, token: Optional[str] = None, host: str = DEFAULT_URL, debug: bool = False):
         super().__init__(token, host, debug)
 
     def get_offers(self, include_empty_offers=False) -> List[Offer]:

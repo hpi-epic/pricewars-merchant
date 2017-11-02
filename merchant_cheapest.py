@@ -6,12 +6,12 @@ from merchant_sdk.models import Offer
 
 
 class CheapestMerchant(MerchantBaseLogic):
-    def __init__(self, token, port):
+    def __init__(self, token, port, marketplace_url, producer_url):
         super().__init__()
 
         self.settings = {
-            'marketplace_url': MerchantBaseLogic.get_marketplace_url(),
-            'producer_url': MerchantBaseLogic.get_producer_url(),
+            'marketplace_url': marketplace_url,
+            'producer_url': producer_url,
             'initialProducts': 5,
             'shipping': 5,
             'primeShipping': 1,
@@ -176,18 +176,24 @@ class CheapestMerchant(MerchantBaseLogic):
             print('error on buying a new product:', e)
 
 
-def run_merchant(port, token):
-    merchant = CheapestMerchant(token, port)
+def run_merchant(port, token, marketplace_url, producer_url):
+    merchant = CheapestMerchant(token, port, marketplace_url, producer_url)
     merchant.start()
     merchant_server = MerchantServer(merchant)
     app = merchant_server.app
     app.run(host='0.0.0.0', port=port)
 
 
-if __name__ == "__main__":
+def parse_arguments():
     parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--port', type=int, help='port to bind flask App to')
     group.add_argument('--token', type=str, help='Merchant secret token')
-    args = parser.parse_args()
-    run_merchant(args.port, args.token)
+    parser.add_argument('--marketplace', type=str, default=MarketplaceApi.DEFAULT_URL, help='Marketplace URL')
+    parser.add_argument('--producer', type=str, default=ProducerApi.DEFAULT_URL, help='Producer URL')
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    run_merchant(args.port, args.token, args.marketplace, args.producer)

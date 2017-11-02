@@ -1,8 +1,10 @@
-from.PricewarsBaseApi import PricewarsBaseApi
+from merchant_sdk.api.PricewarsBaseApi import PricewarsBaseApi
 
 
 class KafkaApi(PricewarsBaseApi):
-    def __init__(self, token: str, host: str='http://kafka-reverse-proxy:8001', debug: bool=False):
+    DEFAULT_URL = 'http://kafka-reverse-proxy:8001'
+
+    def __init__(self, token: str, host: str = DEFAULT_URL, debug: bool = False):
         super().__init__(token, host, debug)
 
     def _request_data_export(self, topic):
@@ -14,12 +16,10 @@ class KafkaApi(PricewarsBaseApi):
         r = self.request('get', url, stream=True)
         with open(local_filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
-                if chunk: # filter out keep-alive new chunks
+                if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
         return True
 
     def request_csv_export_for_topic(self, topic):
         url = self._request_data_export(topic)
-        if not url:
-            return ''
         return '{:s}/{:s}'.format(self.host, url)

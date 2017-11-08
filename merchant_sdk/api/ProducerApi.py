@@ -14,7 +14,7 @@ class ProducerApi(PricewarsBaseApi):
         return self.buy_products(amount=1)
 
     def buy_products(self, amount) -> Product:
-        r = self.request('get', 'buy/{}'.format(amount))
+        r = self.request('post', 'buy/{}'.format(amount))
         return Product.from_dict(r.json())
 
     def get_products(self) -> List[Product]:

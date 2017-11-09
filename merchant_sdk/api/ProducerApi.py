@@ -1,7 +1,8 @@
 from typing import List
 
 from .PricewarsBaseApi import PricewarsBaseApi
-from ..models import Product
+from merchant_sdk.models import Product
+from merchant_sdk.models import Order
 
 
 class ProducerApi(PricewarsBaseApi):
@@ -10,12 +11,12 @@ class ProducerApi(PricewarsBaseApi):
     def __init__(self, token: str, host: str=DEFAULT_URL, debug: bool=False):
         super().__init__(token, host, debug)
 
-    def buy_product(self) -> Product:
+    def buy_product(self) -> Order:
         return self.buy_products(amount=1)
 
-    def buy_products(self, amount) -> Product:
+    def buy_products(self, amount) -> Order:
         r = self.request('post', 'buy/{}'.format(amount))
-        return Product.from_dict(r.json())
+        return Order.from_dict(r.json())
 
     def get_products(self) -> List[Product]:
         r = self.request('get', 'products')

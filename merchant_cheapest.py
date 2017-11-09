@@ -166,12 +166,12 @@ class CheapestMerchant(MerchantBaseLogic):
 
     def buy_product_and_update_offer(self, marketplace_offers):
         try:
-            new_product = self.producer_api.buy_product()
+            product = self.producer_api.buy_product().product
 
-            if new_product.uid in self.products:
-                self.restock_existing_product(new_product, marketplace_offers)
+            if product.uid in self.products:
+                self.restock_existing_product(product, marketplace_offers)
             else:
-                self.add_new_product_to_offers(new_product, marketplace_offers)
+                self.add_new_product_to_offers(product, marketplace_offers)
         except Exception as e:
             print('error on buying a new product:', e)
 

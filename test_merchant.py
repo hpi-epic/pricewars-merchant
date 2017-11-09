@@ -8,6 +8,6 @@ merchant_id = r.merchant_id
 token = r.merchant_token
 print('token', token)
 
-producer = ProducerApi(token)
-product = producer.buy_products(1000)
-print(product)
+producer = ProducerApi(token, debug=True)
+order = producer.buy_products(1000)
+print(order)

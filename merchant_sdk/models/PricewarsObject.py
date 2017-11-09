@@ -1,4 +1,6 @@
 import json
+from typing import Sequence
+
 
 class PricewarsObject:
 
@@ -9,9 +11,9 @@ class PricewarsObject:
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict):
         return cls(**d)
 
     @classmethod
-    def from_list(cls, l):
+    def from_list(cls, l: Sequence):
         return [cls.from_dict(e) for e in l]

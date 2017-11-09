@@ -15,10 +15,7 @@ class Offer(PricewarsObject):
         self.quality = quality
         self.signature = signature
         self.uid = uid
-        if shipping_time is None:
-            self.shipping_time = {'standard': 3}
-        else:
-            self.shipping_time = shipping_time
+        self.shipping_time = shipping_time or {'standard': 3}
 
     @staticmethod
     def from_product(product):

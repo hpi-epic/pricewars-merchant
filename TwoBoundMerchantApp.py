@@ -208,7 +208,7 @@ class MerchantD(MerchantBaseLogic):
 
     def buy_product_and_update_offer(self):
         # print('buy Product and update')
-        new_product = self.producer_api.buy_product()
+        new_product = self.producer_api.order()
 
         if new_product.uid in self.offers:
             self.restock_existing_product(new_product)

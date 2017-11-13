@@ -166,7 +166,7 @@ class CheapestMerchant(MerchantBaseLogic):
 
     def buy_product_and_update_offer(self, marketplace_offers):
         try:
-            product = self.producer.buy_product().product
+            product = self.producer.order(1).product
 
             if product.uid in self.products:
                 self.restock_existing_product(product, marketplace_offers)

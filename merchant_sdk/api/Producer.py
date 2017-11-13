@@ -8,14 +8,11 @@ from merchant_sdk.models import Order
 class Producer(PricewarsBaseApi):
     DEFAULT_URL = 'http://producer:3050'
 
-    def __init__(self, token: str, host: str=DEFAULT_URL, debug: bool=False):
+    def __init__(self, token: str, host: str = DEFAULT_URL, debug: bool = False):
         super().__init__(token, host, debug)
 
-    def buy_product(self) -> Order:
-        return self.buy_products(amount=1)
-
-    def buy_products(self, amount) -> Order:
-        r = self.request('post', 'buy/{}'.format(amount))
+    def order(self, amount) -> Order:
+        r = self.request('post', 'order', data={'amount': amount})
         return Order.from_dict(r.json())
 
     def get_products(self) -> List[Product]:

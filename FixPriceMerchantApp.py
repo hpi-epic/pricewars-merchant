@@ -86,7 +86,7 @@ class MerchantSampleLogic(MerchantBaseLogic):
         new_products = []
         for _ in range(missing_offers):
             try:
-                prod = self.producer_api.buy_product()
+                prod = self.producer_api.order()
                 new_products.append(prod)
             except:
                 pass

@@ -83,7 +83,7 @@ class SecondCheapestMerchantApp(MerchantBaseLogic):
 
     def buy_product(self):
         try:
-            new_product = self.producer_api.buy_product()
+            new_product = self.producer_api.order()
             if new_product.uid not in self.purchase_prices:
                 self.purchase_prices[new_product.uid] = new_product.price
             return new_product

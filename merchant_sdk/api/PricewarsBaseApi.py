@@ -33,7 +33,7 @@ class PricewarsBaseApi:
     def set_auth_token(self, token: str):
         self.session.headers.update({'Authorization': 'Token {:s}'.format(token)})
 
-    def wait_for_host(self, timeout: int = 60) -> None:
+    def wait_for_host(self, timeout: float = 60) -> None:
         """
         Waits until it is possible to connect to host.
         """

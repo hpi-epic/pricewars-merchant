@@ -1,5 +1,4 @@
 from merchant_sdk.api import Marketplace, Producer
-from merchant_sdk.models import Offer
 
 marketplace = Marketplace()
 marketplace.wait_for_host()
@@ -9,5 +8,5 @@ token = r.merchant_token
 print('token', token)
 
 producer = Producer(token, debug=True)
-order = producer.buy_products(1000)
+order = producer.order(1000)
 print(order)

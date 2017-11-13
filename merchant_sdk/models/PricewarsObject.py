@@ -1,14 +1,13 @@
-import json
 from typing import Sequence
 
 
 class PricewarsObject:
 
     def to_dict(self):
-        return self.__dict__
+        return vars(self)
 
     def __repr__(self):
-        return json.dumps(self.to_dict())
+        return repr(vars(self))
 
     @classmethod
     def from_dict(cls, d: dict):

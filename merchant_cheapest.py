@@ -104,7 +104,7 @@ class CheapestMerchant(MerchantBaseLogic):
             for product in self.products.values():
                 if product.uid in self.offers:
                     offer = self.offers[product.uid]
-                    offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
+                    offer.price = self.calculate_prices(offers, product.product_id)
                     try:
                         self.marketplace.update_offer(offer)
                     except Exception as e:
@@ -115,48 +115,43 @@ class CheapestMerchant(MerchantBaseLogic):
             print('error on executing the logic:', e)
         return self.settings['maxReqPerSec'] / 10
 
-    def calculate_prices(self, marketplace_offers, product_uid, purchase_price, product_id):
+    def calculate_prices(self, marketplace_offers, product_id):
         competitive_offers = [offer for offer in marketplace_offers if
                               offer.merchant_id != self.merchant_id and offer.product_id == product_id]
         cheapest_offer = 999
 
         if len(competitive_offers) == 0:
-            return 2 * purchase_price
+            return 30
         for offer in competitive_offers:
             if offer.price < cheapest_offer:
                 cheapest_offer = offer.price
 
         new_price = cheapest_offer - self.settings['price_decrement']
-        if new_price < purchase_price:
-            new_price = purchase_price
 
         return new_price
 
     def add_new_product_to_offers(self, new_product, marketplace_offers):
-        new_offer = Offer.from_product(new_product)
-        new_offer.price = self.calculate_prices(marketplace_offers, new_product.uid, new_product.price,
-                                                new_product.product_id)
-        new_offer.shipping_time = {
+        price = self.calculate_prices(marketplace_offers, new_product.product_id)
+        shipping_time = {
             'standard': self.settings['shipping'],
             'prime': self.settings['primeShipping']
         }
-        new_offer.prime = True
+        new_offer = Offer.from_product(new_product, price, shipping_time)
+
         try:
-            new_offer.offer_id = self.marketplace.add_offer(new_offer).offer_id
+            new_offer = self.marketplace.add_offer(new_offer)
             self.products[new_product.uid] = new_product
             self.offers[new_product.uid] = new_offer
         except Exception as e:
             print('error on adding a new offer:', e)
 
     def restock_existing_product(self, new_product, marketplace_offers):
-        # print('restock product', new_product)
         product = self.products[new_product.uid]
         product.amount += new_product.amount
         product.signature = new_product.signature
 
         offer = self.offers[product.uid]
-        # print('in this offer:', offer)
-        offer.price = self.calculate_prices(marketplace_offers, product.uid, product.price, product.product_id)
+        offer.price = self.calculate_prices(marketplace_offers, product.product_id)
         offer.amount = product.amount
         offer.signature = product.signature
         try:

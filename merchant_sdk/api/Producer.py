@@ -5,7 +5,7 @@ from merchant_sdk.models import Product
 from merchant_sdk.models import Order
 
 
-class ProducerApi(PricewarsBaseApi):
+class Producer(PricewarsBaseApi):
     DEFAULT_URL = 'http://producer:3050'
 
     def __init__(self, token: str, host: str=DEFAULT_URL, debug: bool=False):

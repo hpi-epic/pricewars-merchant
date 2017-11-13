@@ -4,7 +4,7 @@ import sys
 sys.path.append('./')
 sys.path.append('../')
 from merchant_sdk import MerchantBaseLogic, MerchantServer
-from merchant_sdk.api import PricewarsRequester, MarketplaceApi, ProducerApi
+from merchant_sdk.api import PricewarsRequester, Marketplace, Producer
 from merchant_sdk.models import Offer
 import time
 
@@ -53,8 +53,8 @@ class MerchantD(MerchantBaseLogic):
             Setup API
         '''
         PricewarsRequester.add_api_token(self.merchant_token)
-        self.marketplace_api = MarketplaceApi(host=self.settings['marketplace_url'], debug=False)
-        self.producer_api = ProducerApi(host=self.settings['producer_url'], debug=False)
+        self.marketplace_api = Marketplace(host=self.settings['marketplace_url'], debug=False)
+        self.producer_api = Producer(host=self.settings['producer_url'], debug=False)
 
         '''
             Start Logic Loop

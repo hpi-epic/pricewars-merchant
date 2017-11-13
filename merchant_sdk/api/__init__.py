@@ -1,5 +1,5 @@
-from .MarketplaceApi import MarketplaceApi
-from .ProducerApi import ProducerApi
-from .KafkaApi import KafkaApi
+from .Marketplace import Marketplace
+from .Producer import Producer
+from .Kafka import Kafka
 
-__all__ = [MarketplaceApi, ProducerApi, KafkaApi]
+__all__ = [Marketplace, Producer, Kafka]

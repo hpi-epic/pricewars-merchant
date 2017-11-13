@@ -1,7 +1,7 @@
 import argparse
 
 from merchant_sdk import MerchantBaseLogic, MerchantServer
-from merchant_sdk.api import MarketplaceApi, ProducerApi
+from merchant_sdk.api import Marketplace, Producer
 from merchant_sdk.models import Offer
 
 
@@ -19,11 +19,11 @@ class CheapestMerchant(MerchantBaseLogic):
             'price_decrement': 0.05
         }
 
-        self.marketplace_api = MarketplaceApi(token, host=self.settings['marketplace_url'])
-        self.marketplace_api.wait_for_host()
+        self.marketplace = Marketplace(token, host=self.settings['marketplace_url'])
+        self.marketplace.wait_for_host()
         if token is None:
-            token = self.marketplace_api.register(endpoint_url_or_port=port,
-                                                  merchant_name='Cheapest').merchant_token
+            token = self.marketplace.register(endpoint_url_or_port=port,
+                                              merchant_name='Cheapest').merchant_token
 
         self.settings['merchant_id'] = MerchantBaseLogic.calculate_id(token)
 
@@ -33,7 +33,7 @@ class CheapestMerchant(MerchantBaseLogic):
         self.merchant_id = self.settings['merchant_id']
         self.merchant_token = token
 
-        self.producer_api = ProducerApi(self.merchant_token, host=self.settings['producer_url'])
+        self.producer = Producer(self.merchant_token, host=self.settings['producer_url'])
 
         self.run_logic_loop()
 
@@ -43,8 +43,8 @@ class CheapestMerchant(MerchantBaseLogic):
         However, changing the endpoint (after simulation start) may lead to an inconsistent state
         :return: None
         """
-        self.marketplace_api.host = self.settings['marketplace_url']
-        self.producer_api.host = self.settings['producer_url']
+        self.marketplace.host = self.settings['marketplace_url']
+        self.producer.host = self.settings['producer_url']
 
     '''
         Implement Abstract methods / Interface
@@ -74,7 +74,7 @@ class CheapestMerchant(MerchantBaseLogic):
         if self.state != 'running':
             return
         try:
-            offers = self.marketplace_api.get_offers()
+            offers = self.marketplace.get_offers()
             self.buy_product_and_update_offer(offers)
         except Exception as e:
             print('error on handling a sold offer:', e)
@@ -85,7 +85,7 @@ class CheapestMerchant(MerchantBaseLogic):
 
     def setup(self):
         try:
-            marketplace_offers = self.marketplace_api.get_offers()
+            marketplace_offers = self.marketplace.get_offers()
             for i in range(self.settings['initialProducts']):
                 self.buy_product_and_update_offer(marketplace_offers)
         except Exception as e:
@@ -93,12 +93,12 @@ class CheapestMerchant(MerchantBaseLogic):
 
     def execute_logic(self):
         try:
-            offers = self.marketplace_api.get_offers()
+            offers = self.marketplace.get_offers()
 
             items_offered = sum(o.amount for o in offers if o.merchant_id == self.settings['merchant_id'])
             while items_offered < (self.settings['initialProducts'] - 1):
                 self.buy_product_and_update_offer(offers)
-                items_offered = sum(o.amount for o in self.marketplace_api.get_offers() if
+                items_offered = sum(o.amount for o in self.marketplace.get_offers() if
                                     o.merchant_id == self.settings['merchant_id'])
 
             for product in self.products.values():
@@ -106,7 +106,7 @@ class CheapestMerchant(MerchantBaseLogic):
                     offer = self.offers[product.uid]
                     offer.price = self.calculate_prices(offers, product.uid, product.price, product.product_id)
                     try:
-                        self.marketplace_api.update_offer(offer)
+                        self.marketplace.update_offer(offer)
                     except Exception as e:
                         print('error on updating an offer:', e)
                 else:
@@ -142,7 +142,7 @@ class CheapestMerchant(MerchantBaseLogic):
         }
         new_offer.prime = True
         try:
-            new_offer.offer_id = self.marketplace_api.add_offer(new_offer).offer_id
+            new_offer.offer_id = self.marketplace.add_offer(new_offer).offer_id
             self.products[new_product.uid] = new_product
             self.offers[new_product.uid] = new_offer
         except Exception as e:
@@ -160,13 +160,13 @@ class CheapestMerchant(MerchantBaseLogic):
         offer.amount = product.amount
         offer.signature = product.signature
         try:
-            self.marketplace_api.restock(offer.offer_id, new_product.amount, offer.signature)
+            self.marketplace.restock(offer.offer_id, new_product.amount, offer.signature)
         except Exception as e:
             print('error on restocking an offer:', e)
 
     def buy_product_and_update_offer(self, marketplace_offers):
         try:
-            product = self.producer_api.buy_product().product
+            product = self.producer.buy_product().product
 
             if product.uid in self.products:
                 self.restock_existing_product(product, marketplace_offers)
@@ -189,8 +189,8 @@ def parse_arguments():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--port', type=int, help='port to bind flask App to')
     group.add_argument('--token', type=str, help='Merchant secret token')
-    parser.add_argument('--marketplace', type=str, default=MarketplaceApi.DEFAULT_URL, help='Marketplace URL')
-    parser.add_argument('--producer', type=str, default=ProducerApi.DEFAULT_URL, help='Producer URL')
+    parser.add_argument('--marketplace', type=str, default=Marketplace.DEFAULT_URL, help='Marketplace URL')
+    parser.add_argument('--producer', type=str, default=Producer.DEFAULT_URL, help='Producer URL')
     return parser.parse_args()
 
 

@@ -1,7 +1,7 @@
 from merchant_sdk.api.PricewarsBaseApi import PricewarsBaseApi
 
 
-class KafkaApi(PricewarsBaseApi):
+class Kafka(PricewarsBaseApi):
     DEFAULT_URL = 'http://kafka-reverse-proxy:8001'
 
     def __init__(self, token: str, host: str = DEFAULT_URL, debug: bool = False):

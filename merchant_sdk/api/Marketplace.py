@@ -8,7 +8,7 @@ from .PricewarsBaseApi import PricewarsBaseApi
 from ..models import Offer, MerchantRegisterResponse
 
 
-class MarketplaceApi(PricewarsBaseApi):
+class Marketplace(PricewarsBaseApi):
     DEFAULT_URL = 'http://marketplace:8080'
 
     def __init__(self, token: Optional[str] = None, host: str = DEFAULT_URL, debug: bool = False):

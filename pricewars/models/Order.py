@@ -1,8 +1,8 @@
 from typing import Union
 from typing import Optional
 
-from merchant_sdk.models.PricewarsObject import PricewarsObject
-from merchant_sdk.models import Product
+from pricewars.models.PricewarsObject import PricewarsObject
+from pricewars.models import Product
 
 
 class Order(PricewarsObject):

@@ -3,7 +3,7 @@ import json
 from flask import Flask, request, Response
 from flask_cors import CORS
 
-from .MerchantBaseLogic import MerchantBaseLogic
+from .PricewarsMerchant import PricewarsMerchant
 from .models import SoldOffer
 
 
@@ -15,9 +15,9 @@ def json_response(obj):
 
 class MerchantServer:
     
-    def __init__(self, merchant_logic: MerchantBaseLogic, debug=False):
-        self.merchant_logic = merchant_logic
-        self.server_settings = {
+    def __init__(self, merchant: PricewarsMerchant, debug=False):
+        self.merchant = merchant
+        self.settings = {
             'debug': debug
         }
 
@@ -27,7 +27,7 @@ class MerchantServer:
         self.register_routes()
 
     def log(self, *msg):
-        if self.server_settings['debug']:
+        if self.settings['debug']:
             print(*msg)
 
     '''
@@ -36,17 +36,17 @@ class MerchantServer:
 
     def get_all_settings(self):
         tmp_settings = {
-            'state': self.merchant_logic.get_state()
+            'state': self.merchant.get_state()
         }
-        tmp_settings.update(self.merchant_logic.get_settings())
-        tmp_settings.update(self.server_settings)
+        tmp_settings.update(self.merchant.get_settings())
+        tmp_settings.update(self.settings)
         return tmp_settings
 
     def update_all_settings(self, new_settings):
-        new_server_settings = {k: new_settings[k] for k in new_settings if k in self.server_settings}
-        self.server_settings.update(new_server_settings)
-        new_logic_settings = {k: new_settings[k] for k in new_settings if k in self.merchant_logic.get_settings()}
-        self.merchant_logic.update_settings(new_logic_settings)
+        new_server_settings = {k: new_settings[k] for k in new_settings if k in self.settings}
+        self.settings.update(new_server_settings)
+        new_logic_settings = {k: new_settings[k] for k in new_settings if k in self.merchant.get_settings()}
+        self.merchant.update_settings(new_logic_settings)
 
         self.log('update settings', self.get_all_settings())
 
@@ -89,9 +89,9 @@ class MerchantServer:
         self.update_all_settings(endpoint_settings)
 
         if next_state == 'start':
-            self.merchant_logic.start()
+            self.merchant.start()
         elif next_state == 'stop':
-            self.merchant_logic.stop()
+            self.merchant.stop()
 
         return json_response({})
 
@@ -99,7 +99,7 @@ class MerchantServer:
         try:
             sent_json = request.get_json(force=True)
             offer = SoldOffer.from_dict(sent_json)
-            self.merchant_logic.sold_offer(offer)
+            self.merchant.sold_offer(offer)
         except Exception as e:
             self.log(e)
 

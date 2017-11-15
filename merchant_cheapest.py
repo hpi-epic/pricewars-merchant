@@ -1,11 +1,11 @@
 import argparse
 
-from merchant_sdk import MerchantBaseLogic, MerchantServer
-from merchant_sdk.api import Marketplace, Producer
-from merchant_sdk.models import Offer
+from pricewars import PricewarsMerchant, MerchantServer
+from pricewars.api import Marketplace, Producer
+from pricewars.models import Offer
 
 
-class CheapestMerchant(MerchantBaseLogic):
+class CheapestMerchant(PricewarsMerchant):
     def __init__(self, token, port, marketplace_url, producer_url):
         super().__init__()
 
@@ -25,7 +25,7 @@ class CheapestMerchant(MerchantBaseLogic):
             token = self.marketplace.register(endpoint_url_or_port=port,
                                               merchant_name='Cheapest').merchant_token
 
-        self.settings['merchant_id'] = MerchantBaseLogic.calculate_id(token)
+        self.settings['merchant_id'] = PricewarsMerchant.calculate_id(token)
 
         self.products = {}
         self.offers = {}

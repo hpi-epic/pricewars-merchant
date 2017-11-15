@@ -3,7 +3,7 @@ import requests
 from time import time
 from typing import Optional
 
-from merchant_sdk.models.ApiError import ApiError
+from pricewars.models.ApiError import ApiError
 
 
 class PricewarsBaseApi:

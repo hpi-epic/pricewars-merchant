@@ -1,4 +1,4 @@
-from merchant_sdk.api.PricewarsBaseApi import PricewarsBaseApi
+from pricewars.api.PricewarsBaseApi import PricewarsBaseApi
 
 
 class Kafka(PricewarsBaseApi):

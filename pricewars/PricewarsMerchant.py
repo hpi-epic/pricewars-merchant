@@ -7,7 +7,7 @@ import hashlib
 import base64
 
 
-class MerchantBaseLogic:
+class PricewarsMerchant:
     __metaclass__ = ABCMeta
 
     def __init__(self):

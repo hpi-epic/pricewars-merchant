@@ -1,8 +1,8 @@
 from typing import List
 
 from .PricewarsBaseApi import PricewarsBaseApi
-from merchant_sdk.models import Product
-from merchant_sdk.models import Order
+from pricewars.models import Product
+from pricewars.models import Order
 
 
 class Producer(PricewarsBaseApi):

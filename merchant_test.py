@@ -1,4 +1,4 @@
-from merchant_sdk.api import Marketplace, Producer
+from pricewars.api import Marketplace, Producer
 
 marketplace = Marketplace()
 marketplace.wait_for_host()

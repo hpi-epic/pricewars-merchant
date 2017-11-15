@@ -12,7 +12,7 @@ class Producer(PricewarsBaseApi):
         super().__init__(token, host, debug)
 
     def order(self, amount) -> Order:
-        r = self.request('post', 'order', data={'amount': amount})
+        r = self.request('post', 'orders', data={'amount': amount})
         return Order.from_dict(r.json())
 
     def get_products(self) -> List[Product]:

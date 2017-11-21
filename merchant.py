@@ -5,7 +5,7 @@ from pricewars.api import Marketplace, Producer
 from pricewars.models import Offer
 
 
-class CheapestMerchant(PricewarsMerchant):
+class Merchant(PricewarsMerchant):
     def __init__(self, token, port, marketplace_url, producer_url):
         super().__init__()
 
@@ -172,7 +172,7 @@ class CheapestMerchant(PricewarsMerchant):
 
 
 def run_merchant(port, token, marketplace_url, producer_url):
-    merchant = CheapestMerchant(token, port, marketplace_url, producer_url)
+    merchant = Merchant(token, port, marketplace_url, producer_url)
     merchant.start()
     merchant_server = MerchantServer(merchant)
     app = merchant_server.app

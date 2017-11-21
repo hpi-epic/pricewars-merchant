@@ -6,15 +6,4 @@ WORKDIR $APP_HOME
 
 ADD . $APP_HOME
 
-RUN for folder in /merchant/*; do \
-        if [ -d "${folder}" ];then \
-            for file in $folder/*; do \
-                if [ "${file}" != "${file%requirements.txt}" ];then \
-                    echo "Installing dependencies from $file ..."; \
-                    pip install -r $file; \
-                fi \
-            done \
-        fi \
-    done
-
-CMD ["bash", "/merchant/start-merchant.sh"]
+RUN python3 -m pip install -r requirements.txt

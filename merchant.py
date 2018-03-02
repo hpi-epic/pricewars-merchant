@@ -9,14 +9,14 @@ class Merchant(PricewarsMerchant):
     def __init__(self, token, port, marketplace_url, producer_url):
         super().__init__(port)
 
-        self.settings = {
+        self.settings.update({
             'initialProducts': 5,
             'shipping': 5,
             'primeShipping': 1,
             'maxReqPerSec': 40.0,
             'price_decrement': 0.05,
             'default price': 30
-        }
+        })
 
         self.marketplace_url = marketplace_url
         self.producer_url = producer_url
@@ -33,21 +33,6 @@ class Merchant(PricewarsMerchant):
 
         self.producer = Producer(self.merchant_token, host=self.producer_url)
         self.setup()
-
-    def update_settings(self, new_settings):
-        def cast_to_expected_type(key, value, def_settings=self.settings):
-            if key in def_settings:
-                return type(def_settings[key])(value)
-            else:
-                return value
-
-        new_settings_casted = dict([
-            (key, cast_to_expected_type(key, new_settings[key]))
-            for key in new_settings
-        ])
-
-        self.settings.update(new_settings_casted)
-        return self.settings
 
     def sold_offer(self, offer):
         print('Product sold')
@@ -72,7 +57,7 @@ class Merchant(PricewarsMerchant):
         except Exception as e:
             print('error on setup:', e)
 
-    def execute_logic(self):
+    def update_offers(self):
         try:
             offers = self.marketplace.get_offers()
 

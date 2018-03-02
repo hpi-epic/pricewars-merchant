@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-import traceback
 import time
 import threading
 import hashlib
@@ -13,74 +12,43 @@ class PricewarsMerchant:
     __metaclass__ = ABCMeta
 
     def __init__(self, port: int):
-        self.settings = {}
-        self.interval = 5
-        self.thread = None
+        self.settings = {'update interval': 5}
         self.state = 'running'
         self.server_thread = self.start_server(port)
 
     @staticmethod
-    def calculate_id(token):
+    def calculate_id(token: str) -> str:
         return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest()).decode('utf-8')
 
     def run(self):
+        start_time = time.time()
         while True:
             if self.state == 'running':
-                try:
-                    self.interval = self.execute_logic() or self.interval
-                except Exception as e:
-                    print('error on merchantLogic:\n', e)
-                    traceback.print_exc()
-                    print('safely stop Merchant')
-                    self.stop()
-            else:
-                self.interval = 5
+                self.update_offers()
+            # Waiting for the length of the update interval minus the execution time
+            time.sleep(self.settings['update interval'] -
+                       ((time.time() - start_time) % self.settings['update interval']))
 
-            time.sleep(max(0, self.interval))
-
-    '''
-        Settings and merchant controls for Web-Frontend
-    '''
-
-    def get_settings(self):
-        return self.settings
-
-    def update_settings(self, new_settings):
-        def cast_to_expected_type(key, value, def_settings=self.settings):
-            if key in def_settings:
-                return type(def_settings[key])(value)
-            else:
-                return value
-
-        new_settings_casted = dict([
-            (key, cast_to_expected_type(key, new_settings[key]))
-            for key in new_settings
-        ])
-
-        self.settings.update(new_settings_casted)
-        return self.settings
+    def update_settings(self, new_settings: dict) -> None:
+        for key, value in new_settings.items():
+            if key in self.settings:
+                # Cast value type to the type that is already in the settings dictionary
+                value = type(self.settings[key])(value)
+            self.settings[key] = value
 
     @abstractmethod
-    def execute_logic(self):
+    def update_offers(self) -> None:
         """
-        Entry point for regular merchant activity
-        The base logic class takes care of the possible states of the merchant,
-        i.e. this method is not called when the merchant is stopping
-        :return: time in seconds (float) to the next wanted execution
+        Entry point for regular merchant activity.
+        When the merchant is running, this is called in each update interval.
         """
-        return self.interval
-
-    def get_state(self):
-        return self.state
+        pass
 
     def start(self):
-        if self.state == 'initialized':
-            self.setup()
         self.state = 'running'
 
     def stop(self):
-        if self.state == 'running':
-            self.state = 'stopping'
+        self.state = 'stopping'
 
     @abstractmethod
     def sold_offer(self, offer: SoldOffer) -> None:

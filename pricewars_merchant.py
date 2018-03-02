@@ -1,19 +1,23 @@
 from abc import ABCMeta, abstractmethod
-
 import traceback
 import time
+import threading
 import hashlib
 import base64
+
+from server import MerchantServer
+from models import SoldOffer
 
 
 class PricewarsMerchant:
     __metaclass__ = ABCMeta
 
-    def __init__(self):
+    def __init__(self, port: int):
         self.settings = {}
         self.interval = 5
         self.thread = None
-        self.state = 'initialized'
+        self.state = 'running'
+        self.server_thread = self.start_server(port)
 
     @staticmethod
     def calculate_id(token):
@@ -56,14 +60,6 @@ class PricewarsMerchant:
         self.settings.update(new_settings_casted)
         return self.settings
 
-    def setup(self):
-        """
-        Use this method to:
-        * fetch all your existing offers form the marketplace
-        * buy products and offer them in the market
-        """
-        pass
-
     @abstractmethod
     def execute_logic(self):
         """
@@ -86,15 +82,16 @@ class PricewarsMerchant:
         if self.state == 'running':
             self.state = 'stopping'
 
-    '''
-        Simulation API
-    '''
-
     @abstractmethod
-    def sold_offer(self, offer_json):
+    def sold_offer(self, offer: SoldOffer) -> None:
         """
-        Do not block execution
-        :param offer_json:
-        :return: does not matter, but must be in time
+        This method is called whenever the merchant sells a product.
         """
         pass
+
+    def start_server(self, port):
+        server = MerchantServer(self)
+        thread = threading.Thread(target=server.app.run, kwargs={'host': '0.0.0.0', 'port': port})
+        thread.daemon = True
+        thread.start()
+        return thread

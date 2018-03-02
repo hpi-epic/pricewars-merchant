@@ -1,27 +1,26 @@
 import argparse
-import threading
 
 from pricewars_merchant import PricewarsMerchant
-from server import MerchantServer
 from api import Marketplace, Producer
 from models import Offer
 
 
 class Merchant(PricewarsMerchant):
     def __init__(self, token, port, marketplace_url, producer_url):
-        super().__init__()
+        super().__init__(port)
 
         self.settings = {
-            'marketplace_url': marketplace_url,
-            'producer_url': producer_url,
             'initialProducts': 5,
             'shipping': 5,
             'primeShipping': 1,
             'maxReqPerSec': 40.0,
-            'price_decrement': 0.05
+            'price_decrement': 0.05,
+            'default price': 30
         }
 
-        self.marketplace = Marketplace(token, host=self.settings['marketplace_url'])
+        self.marketplace_url = marketplace_url
+        self.producer_url = producer_url
+        self.marketplace = Marketplace(token, host=self.marketplace_url)
         self.marketplace.wait_for_host()
         self.merchant_token = token or self.marketplace.register(endpoint_url_or_port=port, merchant_name='Cheapest').merchant_token
 
@@ -32,32 +31,8 @@ class Merchant(PricewarsMerchant):
 
         self.merchant_id = self.settings['merchant_id']
 
-        self.producer = Producer(self.merchant_token, host=self.settings['producer_url'])
-
-        self.server_thread = self.start_server(port)
-
-    def start_server(self, port):
-        server = MerchantServer(self)
-        thread = threading.Thread(target=server.app.run, kwargs={'host': '0.0.0.0', 'port': port})
-        thread.daemon = True
-        thread.start()
-        return thread
-
-    def update_api_endpoints(self):
-        """
-        Updated settings may contain new endpoints, so they need to be set in the api client as well.
-        However, changing the endpoint (after simulation start) may lead to an inconsistent state
-        :return: None
-        """
-        self.marketplace.host = self.settings['marketplace_url']
-        self.producer.host = self.settings['producer_url']
-
-    '''
-        Implement Abstract methods / Interface
-    '''
-
-    def get_settings(self):
-        return self.settings
+        self.producer = Producer(self.merchant_token, host=self.producer_url)
+        self.setup()
 
     def update_settings(self, new_settings):
         def cast_to_expected_type(key, value, def_settings=self.settings):
@@ -72,10 +47,10 @@ class Merchant(PricewarsMerchant):
         ])
 
         self.settings.update(new_settings_casted)
-        self.update_api_endpoints()
         return self.settings
 
     def sold_offer(self, offer):
+        print('Product sold')
         # TODO: we store the amount in self.offers but do not decrease it here
         if self.state != 'running':
             return
@@ -127,7 +102,7 @@ class Merchant(PricewarsMerchant):
         cheapest_offer = 999
 
         if len(competitive_offers) == 0:
-            return 30
+            return self.settings['default price']
         for offer in competitive_offers:
             if offer.price < cheapest_offer:
                 cheapest_offer = offer.price
@@ -143,13 +118,9 @@ class Merchant(PricewarsMerchant):
             'prime': self.settings['primeShipping']
         }
         new_offer = Offer.from_product(new_product, price, shipping_time)
-
-        try:
-            new_offer = self.marketplace.add_offer(new_offer)
-            self.products[new_product.uid] = new_product
-            self.offers[new_product.uid] = new_offer
-        except Exception as e:
-            print('error on adding a new offer:', e)
+        new_offer = self.marketplace.add_offer(new_offer)
+        self.products[new_product.uid] = new_product
+        self.offers[new_product.uid] = new_offer
 
     def restock_existing_product(self, new_product, marketplace_offers):
         product = self.products[new_product.uid]
@@ -160,21 +131,16 @@ class Merchant(PricewarsMerchant):
         offer.price = self.calculate_prices(marketplace_offers, product.product_id)
         offer.amount = product.amount
         offer.signature = product.signature
-        try:
-            self.marketplace.restock(offer.offer_id, new_product.amount, offer.signature)
-        except Exception as e:
-            print('error on restocking an offer:', e)
+        self.marketplace.restock(offer.offer_id, new_product.amount, offer.signature)
 
     def buy_product_and_update_offer(self, marketplace_offers):
-        try:
-            product = self.producer.order(1).product
+        order = self.producer.order(1)
+        product = order.product
 
-            if product.uid in self.products:
-                self.restock_existing_product(product, marketplace_offers)
-            else:
-                self.add_new_product_to_offers(product, marketplace_offers)
-        except Exception as e:
-            print('error on buying a new product:', e)
+        if product.uid in self.products:
+            self.restock_existing_product(product, marketplace_offers)
+        else:
+            self.add_new_product_to_offers(product, marketplace_offers)
 
 
 def parse_arguments():

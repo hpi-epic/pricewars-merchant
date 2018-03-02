@@ -20,17 +20,7 @@ class PricewarsMerchant:
     def calculate_id(token):
         return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest()).decode('utf-8')
 
-    '''
-        Threading Logic
-    '''
-
-    def run_logic_loop(self):
-        self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True  # Demonize thread
-        self.thread.start()  # Start the execution
-
     def run(self):
-        """ Method that should run forever """
         while True:
             if self.state == 'running':
                 try:

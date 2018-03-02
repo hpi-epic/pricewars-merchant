@@ -1,4 +1,5 @@
 import argparse
+import threading
 
 from pricewars import PricewarsMerchant, MerchantServer
 from pricewars.api import Marketplace, Producer
@@ -21,21 +22,25 @@ class Merchant(PricewarsMerchant):
 
         self.marketplace = Marketplace(token, host=self.settings['marketplace_url'])
         self.marketplace.wait_for_host()
-        if token is None:
-            token = self.marketplace.register(endpoint_url_or_port=port,
-                                              merchant_name='Cheapest').merchant_token
+        self.merchant_token = token or self.marketplace.register(endpoint_url_or_port=port, merchant_name='Cheapest').merchant_token
 
-        self.settings['merchant_id'] = PricewarsMerchant.calculate_id(token)
+        self.settings['merchant_id'] = PricewarsMerchant.calculate_id(self.merchant_token)
 
         self.products = {}
         self.offers = {}
 
         self.merchant_id = self.settings['merchant_id']
-        self.merchant_token = token
 
         self.producer = Producer(self.merchant_token, host=self.settings['producer_url'])
 
-        self.run_logic_loop()
+        self.server_thread = self.start_server(port)
+
+    def start_server(self, port):
+        server = MerchantServer(self)
+        thread = threading.Thread(target=server.app.run, kwargs={'host': '0.0.0.0', 'port': port})
+        thread.daemon = True
+        thread.start()
+        return thread
 
     def update_api_endpoints(self):
         """
@@ -171,14 +176,6 @@ class Merchant(PricewarsMerchant):
             print('error on buying a new product:', e)
 
 
-def run_merchant(port, token, marketplace_url, producer_url):
-    merchant = Merchant(token, port, marketplace_url, producer_url)
-    merchant.start()
-    merchant_server = MerchantServer(merchant)
-    app = merchant_server.app
-    app.run(host='0.0.0.0', port=port)
-
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description='PriceWars Merchant Being Cheapest')
     group = parser.add_mutually_exclusive_group(required=True)
@@ -189,6 +186,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     args = parse_arguments()
-    run_merchant(args.port, args.token, args.marketplace, args.producer)
+    merchant = Merchant(args.token, args.port, args.marketplace_url, args.producer_url)
+    merchant.run()

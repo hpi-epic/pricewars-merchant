@@ -1,14 +1,15 @@
 import argparse
 from typing import Optional
 
-from pricewars_merchant import PricewarsMerchant
 from api import Marketplace, Producer
+from pricewars_merchant import PricewarsMerchant
+
 from models import Offer
 
 
 class Merchant(PricewarsMerchant):
     def __init__(self, token: Optional[str], port: int, marketplace_url: str, producer_url: str, name='Cheapest'):
-        super().__init__(port)
+        super().__init__(port, token, marketplace_url, producer_url, name)
 
         self.settings.update({
             'max stock': 20,
@@ -17,19 +18,6 @@ class Merchant(PricewarsMerchant):
             'price decrement': 0.05,
             'default price': 30
         })
-
-        self.marketplace = Marketplace(token, host=marketplace_url)
-        self.marketplace.wait_for_host()
-
-        if token:
-            self.token = token
-            self.merchant_id = self.calculate_id(token)
-        else:
-            register_response = self.marketplace.register(port, name)
-            self.token = register_response.merchant_token
-            self.merchant_id = register_response.merchant_id
-
-        self.producer = Producer(self.token, host=producer_url)
 
     def sold_offer(self, offer):
         print('Product sold')

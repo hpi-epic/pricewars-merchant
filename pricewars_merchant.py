@@ -3,7 +3,9 @@ import time
 import threading
 import hashlib
 import base64
+from typing import Optional
 
+from api import Marketplace, Producer
 from server import MerchantServer
 from models import SoldOffer
 
@@ -11,10 +13,23 @@ from models import SoldOffer
 class PricewarsMerchant:
     __metaclass__ = ABCMeta
 
-    def __init__(self, port: int):
+    def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, name: str):
         self.settings = {'update interval': 5}
         self.state = 'running'
         self.server_thread = self.start_server(port)
+
+        self.marketplace = Marketplace(token, host=marketplace_url)
+        self.marketplace.wait_for_host()
+
+        if token:
+            self.token = token
+            self.merchant_id = self.calculate_id(token)
+        else:
+            register_response = self.marketplace.register(port, name)
+            self.token = register_response.merchant_token
+            self.merchant_id = register_response.merchant_id
+
+        self.producer = Producer(self.token, host=producer_url)
 
     @staticmethod
     def calculate_id(token: str) -> str:
@@ -44,18 +59,18 @@ class PricewarsMerchant:
         """
         pass
 
-    def start(self):
-        self.state = 'running'
-
-    def stop(self):
-        self.state = 'stopping'
-
     @abstractmethod
     def sold_offer(self, offer: SoldOffer) -> None:
         """
         This method is called whenever the merchant sells a product.
         """
         pass
+
+    def start(self):
+        self.state = 'running'
+
+    def stop(self):
+        self.state = 'stopping'
 
     def start_server(self, port):
         server = MerchantServer(self)

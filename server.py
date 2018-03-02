@@ -4,8 +4,8 @@ import logging
 from flask import Flask, request, Response
 from flask_cors import CORS
 
-from .PricewarsMerchant import PricewarsMerchant
-from .models import SoldOffer
+from pricewars_merchant import PricewarsMerchant
+from models import SoldOffer
 
 
 def json_response(obj):

@@ -1,7 +1,7 @@
 from typing import Optional
 import pandas as pd
 
-from pricewars.api.PricewarsBaseApi import PricewarsBaseApi
+from api.pricewars_base_api import PricewarsBaseApi
 
 
 class Kafka(PricewarsBaseApi):

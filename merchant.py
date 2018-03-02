@@ -1,9 +1,10 @@
 import argparse
 import threading
 
-from pricewars import PricewarsMerchant, MerchantServer
-from pricewars.api import Marketplace, Producer
-from pricewars.models import Offer
+from pricewars_merchant import PricewarsMerchant
+from server import MerchantServer
+from api import Marketplace, Producer
+from models import Offer
 
 
 class Merchant(PricewarsMerchant):
@@ -188,5 +189,5 @@ def parse_arguments():
 
 if __name__ == '__main__':
     args = parse_arguments()
-    merchant = Merchant(args.token, args.port, args.marketplace_url, args.producer_url)
+    merchant = Merchant(args.token, args.port, args.marketplace, args.producer)
     merchant.run()

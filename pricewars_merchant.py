@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
 import traceback
-import threading
 import time
 import hashlib
 import base64

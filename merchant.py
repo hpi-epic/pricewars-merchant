@@ -4,58 +4,25 @@ from typing import Optional
 from api import Marketplace, Producer
 from pricewars_merchant import PricewarsMerchant
 
-from models import Offer
-
 
 class Merchant(PricewarsMerchant):
     def __init__(self, token: Optional[str], port: int, marketplace_url: str, producer_url: str, name='Cheapest'):
         super().__init__(port, token, marketplace_url, producer_url, name)
 
         self.settings.update({
-            'max stock': 20,
-            'shipping': 5,
-            'primeShipping': 1,
             'price decrement': 0.05,
             'default price': 30
         })
 
-    def sold_offer(self, offer):
-        print('Product sold')
-
-    def update_offers(self):
-        market_situation = self.marketplace.get_offers()
-        own_offers = [offer for offer in market_situation if offer.merchant_id == self.merchant_id]
-        competitor_offers = [offer for offer in market_situation if offer.merchant_id != self.merchant_id]
-
-        inventory_level = sum(offer.amount for offer in own_offers)
-        if inventory_level == 0:
-            self.restock(competitor_offers)
-
-        self.update_prices(own_offers, competitor_offers)
-
-    def restock(self, competitor_offers):
-        order = self.producer.order(self.settings['max stock'])
-        product = order.product
-        price = self.calculate_prices(competitor_offers, product.product_id)
-        shipping_time = {
-            'standard': self.settings['shipping'],
-            'prime': self.settings['primeShipping']
-        }
-        offer = Offer.from_product(product, price, shipping_time)
-        self.marketplace.add_offer(offer)
-
-    def update_prices(self, own_offers, competitor_offers):
-        for offer in own_offers:
-            price = self.calculate_prices(competitor_offers, offer.product_id)
-            offer.price = price
-            self.marketplace.update_offer(offer)
-
-    def calculate_prices(self, competitor_offers, product_id):
-        offers = [offer for offer in competitor_offers if offer.product_id == product_id]
-        if not offers:
+    def calculate_price(self, offer_id, market_situation):
+        product_id = [offer for offer in market_situation if offer.offer_id == offer_id][0].product_id
+        relevant_competitor_offers = [offer for offer in market_situation if
+                                      offer.product_id == product_id and
+                                      offer.merchant_id != self.merchant_id]
+        if not relevant_competitor_offers:
             return self.settings['default price']
 
-        cheapest_offer = min(offers, key=lambda offer: offer.price)
+        cheapest_offer = min(relevant_competitor_offers, key=lambda offer: offer.price)
         return cheapest_offer.price - self.settings['price decrement']
 
 

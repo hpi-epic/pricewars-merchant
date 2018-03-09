@@ -29,6 +29,7 @@ class MerchantServer:
         self.app.add_url_rule('/settings', 'get_settings', self.get_settings, methods=['GET'])
         self.app.add_url_rule('/settings', 'put_settings', self.update_settings, methods=['PUT', 'POST'])
         self.app.add_url_rule('/settings/execution', 'set_state', self.set_state, methods=['POST'])
+        self.app.add_url_rule('/settings/execution', 'get_state', self.get_state, methods=['GET'])
         self.app.add_url_rule('/sold', 'item_sold', self.item_sold, methods=['POST'])
 
     def get_settings(self):
@@ -38,6 +39,9 @@ class MerchantServer:
         self.merchant.update_settings(request.json)
         self.logger.debug('Update settings ' + str(self.merchant.settings))
         return self.get_settings()
+
+    def get_state(self):
+        return json_response({'state': self.merchant.state})
 
     def set_state(self):
         next_state = request.json['nextState']

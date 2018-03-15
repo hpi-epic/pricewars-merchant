@@ -69,7 +69,7 @@ def parse_arguments():
     parser.add_argument('--marketplace', type=str, default=Marketplace.DEFAULT_URL, help='Marketplace URL')
     parser.add_argument('--producer', type=str, default=Producer.DEFAULT_URL, help='Producer URL')
     parser.add_argument('--strategy', type=str, required=True,
-                        help="Chose the merchant's strategy (example: Cheapest, TwoBound)")
+                        help="Chose the merchant's strategy (example: Cheapest, Two Bound)")
     return parser.parse_args()
 
 

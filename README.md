@@ -2,8 +2,6 @@
 
 This repository contains the merchant-component of the Pricewars-simulation. The merchant represents a vendor trying to sell their products at the highest possible profit at the marketplace. As such, they also represent a certain pricing strategy that is to be tested against other pricing strategies. Such a pricing strategy can be either very simple and rule-driven, such as "always be 10 cents cheaper than your competitors" or data-driven and use machine learning strategies.
 
-**Have a look at the IPython Notebooks [for the Marketplace and Product API](docs/Handling%20products%20and%20offers.ipynb) and [Kafka and Data API](docs/Working%20with%20Kafka%20data.ipynb)!**
-
 There is an example merchant available (in `merchant.py`) that implements the following strategies:
 
 * Cheapest
@@ -15,10 +13,10 @@ There is an example merchant available (in `merchant.py`) that implements the fo
 
 There are three ways to build your own merchant:
 * Use the example merchant and make changes to it (`merchant.py`)
-* Subclass the merchant base class and extend it (`pricewars_merchant.py`)
-* Build the merchant from scratch and use the API implementation to communicate with the pricewars services
+* [Subclass the merchant base class and extend it](docs/Building%20a%20merchant%20using%20PricewarsMerchant.ipynb)
+* Build the merchant from scratch and use the API implementation to communicate with the pricewars services (Take a look on how to use the [Marketplace and Producer API](docs/Handling%20products%20and%20offers.ipynb) and the [Kafka API](docs/Working%20with%20Kafka%20data.ipynb))
 
-The meta repository containing general information can be found [here](https://github.com/hpi-epic/masterproject-pricewars).
+The meta repository containing general information can be found [here](https://github.com/hpi-epic/pricewars).
 
 ## Application Overview
 

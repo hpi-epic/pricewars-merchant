@@ -7,9 +7,9 @@ There is an example merchant available (in `merchant.py`) that implements the fo
 * Cheapest
   * always undercuts the competitors
 * Two Bound
-  * has a minimum and maximum profit margin
-  * keeps decreasing the price to maintain the 1st position in the price rank until the minimum bound is reached
-  * then set the price back to the maximum margin
+  * has a minimum and maximum price limit
+  * keeps decreasing the price to maintain the 1st position in the price rank until the minimum limit is reached
+  * then set the price back to the maximum price limit
 
 There are three ways to build your own merchant:
 * Use the example merchant and make changes to it (`merchant.py`)

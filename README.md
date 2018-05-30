@@ -45,6 +45,12 @@ After that you can run the example merchant with e.g. the cheapest strategy:
 ```
 python3 merchant.py --port 5000 --strategy Cheapest
 ``` 
+
+In case you run your merchant outside of the docker environment and cannot modifiy the hosts file, simply provide the addresses under which the marketplace and producer can be reached:
+```
+python3 merchant.py --port 5019 --strategy $STRATEGY$ --marketplace $SERVER_ADDRESS$:8080 --producer $SERVER_ADDRESS$:3050
+```
+
 Run `python3 merchant.py --help` to see all configuration parameters.
 
 ## Concept

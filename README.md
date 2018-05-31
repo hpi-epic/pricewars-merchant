@@ -20,13 +20,13 @@ The meta repository containing general information can be found [here](https://g
 
 ## Application Overview
 
-| Repo |
-|--- |
-| [UI](https://github.com/hpi-epic/pricewars-mgmt-ui) |
-| [Consumer](https://github.com/hpi-epic/pricewars-consumer) |
-| [Producer](https://github.com/hpi-epic/pricewars-producer) |
-| [Marketplace](https://github.com/hpi-epic/pricewars-marketplace) |
-| [Merchant](https://github.com/hpi-epic/pricewars-merchant) |
+**Repositories**
+* Management UI: [https://github.com/hpi-epic/pricewars-mgmt-ui](https://github.com/hpi-epic/pricewars-mgmt-ui)
+* Consumer: [https://github.com/hpi-epic/pricewars-consumer](https://github.com/hpi-epic/pricewars-consumer)
+* Producer: [https://github.com/hpi-epic/pricewars-producer](https://github.com/hpi-epic/pricewars-producer)
+* Marketplace: [https://github.com/hpi-epic/pricewars-marketplace](https://github.com/hpi-epic/pricewars-marketplace)
+* Merchant: [https://github.com/hpi-epic/pricewars-merchant](https://github.com/hpi-epic/pricewars-merchant)
+* Kafka RESTful API: [https://github.com/hpi-epic/pricewars-kafka-rest](https://github.com/hpi-epic/pricewars-kafka-rest)
 
 ## Requirements
 

@@ -4,6 +4,7 @@ from typing import Union
 import socket
 from urllib.parse import urlparse
 
+from api.ApiError import ApiError
 from api.pricewars_base_api import PricewarsBaseApi
 from models import Offer, MerchantRegisterResponse
 
@@ -59,6 +60,13 @@ class Marketplace(PricewarsBaseApi):
 
     def unregister(self, merchant_token: str = '') -> None:
         self.request('delete', 'merchants/{:s}'.format(merchant_token))
+
+    def merchant_exists(self, merchant_id):
+        try:
+            self.request('get', 'merchants/{:s}'.format(merchant_id))
+            return True
+        except ApiError:
+            return False
 
     @staticmethod
     def _get_own_ip_address(destination: str):

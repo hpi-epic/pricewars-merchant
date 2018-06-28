@@ -53,8 +53,8 @@ class TwoBoundStrategy:
 
 
 class Merchant(PricewarsMerchant):
-    def __init__(self, token: Optional[str], port: int, marketplace_url: str, producer_url: str, strategy):
-        super().__init__(port, token, marketplace_url, producer_url, strategy.name)
+    def __init__(self, token: Optional[str], port: int, marketplace_url: str, producer_url: str, strategy, merchant_name: str):
+        super().__init__(port, token, marketplace_url, producer_url, merchant_name)
         self.strategy = strategy
         self.settings.update(strategy.settings)
 
@@ -70,7 +70,9 @@ def parse_arguments():
     parser.add_argument('--marketplace', type=str, default=Marketplace.DEFAULT_URL, help='Marketplace URL')
     parser.add_argument('--producer', type=str, default=Producer.DEFAULT_URL, help='Producer URL')
     parser.add_argument('--strategy', type=str, required=True,
-                        help="Chose the merchant's strategy (example: Cheapest, Two Bound)")
+                        help="Chose the merchant's strategy (example: Cheapest, \"Two Bound\")")
+    parser.add_argument('--name', type=str, default=None,
+                        help="The merchant's name. Defaults to the name of the strategy.")
     return parser.parse_args()
 
 
@@ -80,7 +82,12 @@ def main():
         CheapestStrategy.name: CheapestStrategy,
         TwoBoundStrategy.name: TwoBoundStrategy,
     }
-    merchant = Merchant(args.token, args.port, args.marketplace, args.producer, strategies[args.strategy])
+
+    merchant_name = args.name
+    if merchant_name is None:
+        merchant_name = args.strategy
+
+    merchant = Merchant(args.token, args.port, args.marketplace, args.producer, strategies[args.strategy], merchant_name)
     merchant.run()
 
 

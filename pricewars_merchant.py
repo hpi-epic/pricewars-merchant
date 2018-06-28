@@ -1,3 +1,4 @@
+import json
 from abc import ABCMeta, abstractmethod
 import time
 import threading
@@ -11,8 +12,9 @@ from models import SoldOffer, Offer
 
 
 class PricewarsMerchant(metaclass=ABCMeta):
+    TOKEN_FILE = 'auth_tokens.json'
 
-    def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, name: str):
+    def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str):
         self.settings = {
             'update interval': 5,
             'restock limit': 20,
@@ -23,18 +25,43 @@ class PricewarsMerchant(metaclass=ABCMeta):
         self.state = 'running'
         self.server_thread = self.start_server(port)
 
+        if not token:
+            token = self.load_tokens().get(merchant_name)
+
         self.marketplace = Marketplace(token, host=marketplace_url)
         self.marketplace.wait_for_host()
 
         if token:
-            self.token = token
-            self.merchant_id = self.calculate_id(token)
-        else:
-            register_response = self.marketplace.register(port, name)
+            merchant_id = self.calculate_id(token)
+            if not self.marketplace.merchant_exists(merchant_id):
+                print('Existing token appears to be outdated.')
+                token = None
+            else:
+                print('Running with existing token "%s".' % token)
+                self.token = token
+                self.merchant_id = merchant_id
+
+        if token is None:
+            register_response = self.marketplace.register(port, merchant_name)
             self.token = register_response.merchant_token
             self.merchant_id = register_response.merchant_id
+            self.save_token(merchant_name)
+            print('Registered new merchant with token "%s".' % self.token)
 
         self.producer = Producer(self.token, host=producer_url)
+
+    def load_tokens(self) -> dict:
+        try:
+            with open(self.TOKEN_FILE, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+
+    def save_token(self, name: str) -> None:
+        tokens = self.load_tokens()
+        with open(self.TOKEN_FILE, 'w') as f:
+            tokens[name] = self.token
+            json.dump(tokens, f)
 
     @staticmethod
     def calculate_id(token: str) -> str:

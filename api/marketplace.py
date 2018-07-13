@@ -71,9 +71,9 @@ class Marketplace(PricewarsBaseApi):
     @staticmethod
     def _get_own_ip_address(destination: str):
         try:
-            url = urlparse(destination)
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect((url.hostname, url.port or 80))
-            return s.getsockname()[0]
-        except socket.gaierror:
-            raise RuntimeError("Cannot connect to " + destination)
+            # get own IP under which the merchant can be reached from the the market place (e.g., for sale notfication)
+            # taken from: https://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
+            return ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or \
+                   [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]])[0]
+        except IndexError:
+            raise RuntimeError("Failed to detect merchant IP address")

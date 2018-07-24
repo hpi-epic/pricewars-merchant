@@ -1,4 +1,5 @@
-from time import time
+import sys
+from time import time, sleep
 from typing import Optional
 from urllib.parse import urljoin
 import requests
@@ -27,6 +28,12 @@ class PricewarsBaseApi:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError:
+            if "API request limit reached" in response.text:
+                sleep_time = 10
+                self.logger.error('Exceeded API limit. Sleeping {} seconds and retry.'.format(sleep_time))
+                sleep(sleep_time)
+                return self.request(method, resource, **kwargs)
+
             raise ApiError(response.status_code, url, response.text) from None
         return response
 

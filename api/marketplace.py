@@ -19,6 +19,10 @@ class Marketplace(PricewarsBaseApi):
         r = self.request('get', 'offers', params={'include_empty_offer': include_empty_offers})
         return Offer.from_list(r.json())
 
+    def get_request_limit(self):
+        r = self.request('get', 'config')
+        return r['max_req_per_sec']
+
     def add_offer(self, offer: Offer) -> Offer:
         r = self.request('post', 'offers', json=offer.to_dict())
         return Offer.from_dict(r.json())

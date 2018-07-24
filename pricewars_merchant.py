@@ -48,6 +48,15 @@ class PricewarsMerchant(metaclass=ABCMeta):
             self.save_token(merchant_name)
             print('Registered new merchant with token "%s".' % self.token)
 
+        # request current request limitations from market place.
+        req_limit = self.marketplace.get_request_limit()
+
+        # Update rate has to account of (i) getting market situations,
+        # (ii) posting updates, (iii) getting products, (iv) posting
+        # new products. As restocking should not occur too often,
+        # we use a rather conservative factor of 2.5x factor.
+        self.settings['update interval'] = (1 / req_limit) * 2.5
+
         self.producer = Producer(self.token, host=producer_url)
 
     def load_tokens(self) -> dict:

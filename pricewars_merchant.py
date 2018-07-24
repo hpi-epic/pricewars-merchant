@@ -4,6 +4,7 @@ import time
 import threading
 import hashlib
 import base64
+import random
 from typing import Optional, List
 
 from api import Marketplace, Producer
@@ -17,6 +18,10 @@ class PricewarsMerchant(metaclass=ABCMeta):
     def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str):
         self.settings = {
             'update interval': 5,
+            # it could make sense to choose larger upper bounds to
+            # ensure that the merchants to not exceed their quota.
+            'interval_lower_bound_relative': 0.7,
+            'interval_upper_bound_relative': 1.35,
             'restock limit': 20,
             'order threshold': 0,
             'shipping': 5,
@@ -77,13 +82,33 @@ class PricewarsMerchant(metaclass=ABCMeta):
         return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest()).decode('utf-8')
 
     def run(self):
+        # initial random sleep to avoid starting merchants in sync
+        time.sleep(2 * random.random())
+
         start_time = time.time()
+        update_counter = 1
         while True:
+            interval = self.settings['update interval']
+            lower_bound = self.settings['interval_lower_bound_relative']
+            upper_bound = self.settings['interval_upper_bound_relative']
+
             if self.state == 'running':
                 self.update_offers()
-            # Waiting for the length of the update interval minus the execution time
-            time.sleep(self.settings['update interval'] -
-                       ((time.time() - start_time) % self.settings['update interval']))
+
+            # determine required sleep length for next interval
+            rdm_interval_length = random.uniform(interval * lower_bound, interval * upper_bound)
+            # calculate next expected update timespamp (might be in the 
+            # past in cases where the marketplace blocked for some time)
+            next_update_ts = start_time + interval * (update_counter - 1) + rdm_interval_length
+            sleep_time = next_update_ts - time.time()
+
+            if sleep_time <= 0:
+                # short random sleep to catch up with the intervals,
+                # but try not to DDoS the marketplace
+                sleep_time = random.uniform(interval * 0.05, interval * 0.2)
+
+            time.sleep(sleep_time)
+            update_counter += 1
 
     def update_offers(self) -> None:
         """

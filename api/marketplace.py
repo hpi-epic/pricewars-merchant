@@ -21,7 +21,7 @@ class Marketplace(PricewarsBaseApi):
 
     def get_request_limit(self):
         r = self.request('get', 'config')
-        return r['max_req_per_sec']
+        return r.json()['max_req_per_sec']
 
     def add_offer(self, offer: Offer) -> Offer:
         r = self.request('post', 'offers', json=offer.to_dict())

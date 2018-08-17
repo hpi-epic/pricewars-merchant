@@ -23,12 +23,12 @@ class PricewarsMerchant(metaclass=ABCMeta):
             'interval_lower_bound_relative': 0.7,
             'interval_upper_bound_relative': 1.35,
             'restock limit': 20,
-            'order threshold': 0,
             'shipping': 5,
             'primeShipping': 1,
         }
         self.state = 'running'
         self.server_thread = self.start_server(port)
+        self.inventory_level = 0
 
         if not token:
             token = self.load_tokens().get(merchant_name)
@@ -87,6 +87,7 @@ class PricewarsMerchant(metaclass=ABCMeta):
 
         start_time = time.time()
         update_counter = 1
+        self.restock()
         while True:
             interval = self.settings['update interval']
             lower_bound = self.settings['interval_lower_bound_relative']
@@ -118,16 +119,13 @@ class PricewarsMerchant(metaclass=ABCMeta):
         market_situation = self.marketplace.get_offers()
         own_offers = [offer for offer in market_situation if offer.merchant_id == self.merchant_id]
 
-        inventory_level = sum(offer.amount for offer in own_offers)
-        if inventory_level <= self.settings['order threshold']:
-            self.restock(inventory_level, market_situation)
-
         for offer in own_offers:
             offer.price = self.calculate_price(offer.offer_id, market_situation)
             self.marketplace.update_offer(offer)
 
-    def restock(self, inventory_level, market_situation):
-        order = self.producer.order(self.settings['restock limit'] - inventory_level)
+    def restock(self):
+        order = self.producer.order(self.settings['restock limit'])
+        self.inventory_level += order.product.amount
         product = order.product
         shipping_time = {
             'standard': self.settings['shipping'],
@@ -135,6 +133,7 @@ class PricewarsMerchant(metaclass=ABCMeta):
         }
         offer = Offer.from_product(product, 0, shipping_time)
         offer.merchant_id = self.merchant_id
+        market_situation = self.marketplace.get_offers()
         offer.price = self.calculate_price(offer.offer_id, market_situation + [offer])
         self.marketplace.add_offer(offer)
 
@@ -143,6 +142,9 @@ class PricewarsMerchant(metaclass=ABCMeta):
         This method is called whenever the merchant sells a product.
         """
         print('Product sold')
+        self.inventory_level -= offer.amount_sold
+        if self.inventory_level == 0:
+            self.restock()
 
     def start(self):
         self.state = 'running'

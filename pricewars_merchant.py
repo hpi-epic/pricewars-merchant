@@ -17,18 +17,19 @@ class PricewarsMerchant(metaclass=ABCMeta):
 
     def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str):
         self.settings = {
-            'update interval': 5,
+            'update_interval': 5,
             # it could make sense to choose larger upper bounds to
             # ensure that the merchants to not exceed their quota.
             'interval_lower_bound_relative': 0.7,
             'interval_upper_bound_relative': 1.35,
-            'restock limit': 20,
+            'restock_limit': 20,
             'shipping': 5,
-            'primeShipping': 1,
+            'prime_shipping': 1,
         }
         self.state = 'running'
         self.server_thread = self.start_server(port)
-        self.inventory_level = 0
+        self.number_offered_items = 0
+        self.products_not_offered = []
 
         if not token:
             token = self.load_tokens().get(merchant_name)
@@ -60,7 +61,7 @@ class PricewarsMerchant(metaclass=ABCMeta):
         # (ii) posting updates, (iii) getting products, (iv) posting
         # new products. As restocking should not occur too often,
         # we use a rather conservative factor of 2.5x factor.
-        self.settings['update interval'] = (1 / req_limit) * 2.5
+        self.settings['update_interval'] = (1 / req_limit) * 2.5
 
         self.producer = Producer(self.token, host=producer_url)
 
@@ -87,9 +88,9 @@ class PricewarsMerchant(metaclass=ABCMeta):
 
         start_time = time.time()
         update_counter = 1
-        self.restock()
+        self.open_new_offer()
         while True:
-            interval = self.settings['update interval']
+            interval = self.settings['update_interval']
             lower_bound = self.settings['interval_lower_bound_relative']
             upper_bound = self.settings['interval_upper_bound_relative']
 
@@ -98,7 +99,7 @@ class PricewarsMerchant(metaclass=ABCMeta):
 
             # determine required sleep length for next interval
             rdm_interval_length = random.uniform(interval * lower_bound, interval * upper_bound)
-            # calculate next expected update timespamp (might be in the 
+            # calculate next expected update timestamp (might be in the
             # past in cases where the marketplace blocked for some time)
             next_update_ts = start_time + interval * (update_counter - 1) + rdm_interval_length
             sleep_time = next_update_ts - time.time()
@@ -124,12 +125,18 @@ class PricewarsMerchant(metaclass=ABCMeta):
             self.marketplace.update_offer(offer)
 
     def restock(self):
-        order = self.producer.order(self.settings['restock limit'])
-        self.inventory_level += order.product.amount
-        product = order.product
+        order = self.producer.order(self.settings['restock_limit'])
+        return order.products
+
+    def open_new_offer(self) -> None:
+        if not self.products_not_offered:
+            self.products_not_offered = self.restock()
+
+        product = self.products_not_offered.pop()
+        self.number_offered_items += product.quantity
         shipping_time = {
             'standard': self.settings['shipping'],
-            'prime': self.settings['primeShipping']
+            'prime': self.settings['prime_shipping']
         }
         offer = Offer.from_product(product, 0, shipping_time)
         offer.merchant_id = self.merchant_id
@@ -142,9 +149,9 @@ class PricewarsMerchant(metaclass=ABCMeta):
         This method is called whenever the merchant sells a product.
         """
         print('Product sold')
-        self.inventory_level -= offer.amount_sold
-        if self.inventory_level == 0:
-            self.restock()
+        self.number_offered_items -= offer.quantity_sold
+        if self.number_offered_items == 0:
+            self.open_new_offer()
 
     def start(self):
         self.state = 'running'

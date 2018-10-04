@@ -43,7 +43,7 @@ python3 -m pip install -r requirements.txt
 Be sure that the Pricewars plattform is running.
 After that you can run the example merchant with e.g. the cheapest strategy:
 ```
-python3 merchant.py --port 5005 --strategy Cheapest
+python3 merchant.py --port 5005 --strategy cheapest
 ``` 
 
 In case you run your merchant outside of the docker environment and cannot modifiy the hosts file, simply provide the addresses under which the marketplace and producer can be reached:

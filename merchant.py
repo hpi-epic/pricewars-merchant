@@ -63,14 +63,14 @@ class Merchant(PricewarsMerchant):
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='PriceWars Merchant')
+    parser = argparse.ArgumentParser(description='Price Wars Merchant')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--port', type=int, help='port to bind flask App to')
     group.add_argument('--token', type=str, help='Merchant secret token')
     parser.add_argument('--marketplace', type=str, default=Marketplace.DEFAULT_URL, help='Marketplace URL')
     parser.add_argument('--producer', type=str, default=Producer.DEFAULT_URL, help='Producer URL')
     parser.add_argument('--strategy', type=str, required=True,
-                        help="Chose the merchant's strategy (example: Cheapest, \"Two Bound\")")
+                        help="Chose the merchant's strategy (example: cheapest, two_bound)")
     parser.add_argument('--name', type=str, default=None,
                         help="The merchant's name. Defaults to the name of the strategy.")
     return parser.parse_args()

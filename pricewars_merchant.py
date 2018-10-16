@@ -6,6 +6,7 @@ import hashlib
 import base64
 import random
 from typing import Optional, List
+from pathlib import Path
 
 from api import Marketplace, Producer
 from server import MerchantServer
@@ -13,7 +14,8 @@ from models import SoldOffer, Offer
 
 
 class PricewarsMerchant(metaclass=ABCMeta):
-    TOKEN_FILE = 'auth_tokens.json'
+    # Save/Read token file in merchant directory
+    TOKEN_FILE = Path(__file__).parent / 'auth_tokens.json'
 
     def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str):
         self.settings = {

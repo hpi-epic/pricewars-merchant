@@ -7,6 +7,7 @@ import base64
 import random
 from typing import Optional, List
 from pathlib import Path
+import random
 
 from api import Marketplace, Producer
 from server import MerchantServer
@@ -17,7 +18,11 @@ class PricewarsMerchant(metaclass=ABCMeta):
     # Save/Read token file in merchant directory
     TOKEN_FILE = Path(__file__).parent / 'auth_tokens.json'
 
-    def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str):
+    
+
+    def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str, color: Optional[str]):
+        colors = ['#a6cee3','#1f78b4','#b2df8a','#fb9a99','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
+
         self.settings = {
             'update_interval': 5,
             # it could make sense to choose larger upper bounds to
@@ -32,6 +37,12 @@ class PricewarsMerchant(metaclass=ABCMeta):
         self.server_thread = self.start_server(port)
         self.number_offered_items = 0
         self.products_not_offered = []
+
+        if not color:
+            random.seed(time.time())
+            color = colors[random.randint(0, len(colors)-1)]
+
+        self.color = color
 
         if not token:
             token = self.load_tokens().get(merchant_name)
@@ -50,7 +61,7 @@ class PricewarsMerchant(metaclass=ABCMeta):
                 self.merchant_id = merchant_id
 
         if token is None:
-            register_response = self.marketplace.register(port, merchant_name)
+            register_response = self.marketplace.register(port, merchant_name, color)
             self.token = register_response.merchant_token
             self.merchant_id = register_response.merchant_id
             self.save_token(merchant_name)

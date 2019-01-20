@@ -13,6 +13,9 @@ class CheapestStrategy:
         'default_price': 30
     }
 
+    # color can be set and will always be the same, otherwise random color from predefined set
+    color = "#e31a1c"   
+
     @staticmethod
     def calculate_price(merchant, offer_id, market_situation):
         product_id = [offer for offer in market_situation if offer.offer_id == offer_id][0].product_id
@@ -35,6 +38,8 @@ class TwoBoundStrategy:
         'lower_price_bound': 20
     }
 
+    color = "#33a02c"
+
     @staticmethod
     def calculate_price(merchant, offer_id, market_situation):
         product_id = [offer for offer in market_situation if offer.offer_id == offer_id][0].product_id
@@ -54,7 +59,7 @@ class TwoBoundStrategy:
 
 class Merchant(PricewarsMerchant):
     def __init__(self, token: Optional[str], port: int, marketplace_url: str, producer_url: str, strategy, merchant_name: str):
-        super().__init__(port, token, marketplace_url, producer_url, merchant_name)
+        super().__init__(port, token, marketplace_url, producer_url, merchant_name, (strategy.color if hasattr(strategy, 'color') else None))
         self.strategy = strategy
         self.settings.update(strategy.settings)
 

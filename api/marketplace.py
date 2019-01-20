@@ -44,7 +44,7 @@ class Marketplace(PricewarsBaseApi):
         response = self.request('get', 'holding_cost_rate/' + merchant_id)
         return response.json()
 
-    def register(self, endpoint_url_or_port: Union[str, int], merchant_name: str,
+    def register(self, endpoint_url_or_port: Union[str, int], merchant_name: str, color: str,
                  algorithm_name: str = '') -> MerchantRegisterResponse:
         if type(endpoint_url_or_port) == int:
             port = endpoint_url_or_port
@@ -55,7 +55,8 @@ class Marketplace(PricewarsBaseApi):
         body = {
             'api_endpoint_url': endpoint_url,
             'merchant_name': merchant_name,
-            'algorithm_name': algorithm_name
+            'algorithm_name': algorithm_name,
+            'color': color
         }
         r = self.request('post', 'merchants', json=body)
         response = MerchantRegisterResponse.from_dict(r.json())

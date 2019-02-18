@@ -13,7 +13,8 @@ class CheapestStrategy:
         'default_price': 30
     }
 
-    # color can be set and will always be the same, otherwise random color from predefined set
+    # color can be set and will be the same for each graph, otherwise random color from predefined set
+    # color = red
     color = "#e31a1c"   
 
     @staticmethod
@@ -38,6 +39,7 @@ class TwoBoundStrategy:
         'lower_price_bound': 20
     }
 
+    # color = green
     color = "#33a02c"
 
     @staticmethod

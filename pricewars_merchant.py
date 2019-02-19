@@ -18,8 +18,8 @@ class PricewarsMerchant(metaclass=ABCMeta):
     TOKEN_FILE = Path(__file__).parent / 'auth_tokens.json'
 
     def __init__(self, port: int, token: Optional[str], marketplace_url: str, producer_url: str, merchant_name: str, color: Optional[str]):
-        # default colors which are assigned to a merchant without it's own color
-        # created with colorbrewer: http://colorbrewer2.org/#type=qualitative&scheme=Paired&n=10
+        # Default colors which are assigned to a merchant without its own color.
+        # Created with colorbrewer: http://colorbrewer2.org/#type=qualitative&scheme=Paired&n=10
         colors = ['#a6cee3','#1f78b4','#b2df8a','#fb9a99','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
 
         self.settings = {
@@ -39,7 +39,6 @@ class PricewarsMerchant(metaclass=ABCMeta):
 
         if not color:
             color = colors[random.randint(0, len(colors)-1)]
-
         self.color = color
 
         if not token:
